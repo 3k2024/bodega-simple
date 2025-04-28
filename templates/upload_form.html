@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% block content %}
+<h3>Importar Excel (paso 1/2)</h3>
+<form action="/upload-excel-preview" method="post" enctype="multipart/form-data">
+  <label>Selecciona tu archivo .xls/.xlsx:
+    <input type="file" name="file" accept=".xls,.xlsx" required>
+  </label>
+  <button type="submit" class="button-primary">Siguiente →</button>
+</form>
+{% endblock %}

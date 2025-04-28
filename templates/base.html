@@ -1,0 +1,37 @@
+<!-- templates/base.html -->
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <title>BODEGA INTERNACIONAL</title>
+  <link
+    rel="stylesheet"
+    href="https://unpkg.com/milligram@1.4.1/dist/milligram.min.css"
+  />
+  <style>
+    body { margin: 40px; }
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    table { width: 100%; border-collapse: collapse; }
+    th, td {
+      text-align: left;
+      padding: 8px;
+      border-bottom: 1px solid #ddd;
+    }
+    nav a { margin-right: 15px; }
+    .button-error { background: #4d3ce7; color: white; }
+  </style>
+</head>
+<body>
+  <h1>BODEGA INTERNACIONAL</h1>
+  <nav>
+    <a href="/">Ingresar Nueva Guía</a>
+    <a href="/manual-import">Ingreso Manual Masivo</a>
+    <a href="/guias">Ver Guías</a>
+    <a href="/export/excel">Importar a Excel</a>
+    <a href="/export/pdf">Importar a PDF</a>
+    <a href="/reset">Vaciar Base Datos BD</a>
+  </nav>
+  <hr />
+  {% block content %}{% endblock %}
+</body>
+</html>

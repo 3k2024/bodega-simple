@@ -1,0 +1,99 @@
+{% extends "base.html" %}
+{% block content %}
+<h3>Agregar ítems a guía {{ guia.id_guid }}</h3>
+
+<form
+action="/guia/{{ guia.id_guid }}/agregar-item"
+method="post"
+class="grid-2"
+style="margin-bottom:20px"
+>
+<form action="/guia/{{guia.id_guid}}/upload" method="post" enctype="multipart/form-data">
+  <input type="file" name="file" accept="image/*,application/pdf" required>
+  <button class="button-primary">Adjuntar documento</button>
+</form>
+<ul>
+  {% for doc in guia.documents %}
+    <li><a href="{{doc.path}}" target="_blank">{{doc.filename}}</a></li>
+  {% endfor %}
+</ul>
+
+
+
+
+
+
+
+
+
+<label>
+  TAG
+  <input type="text" name="tag" required />
+</label>
+
+<label>
+  Descripción
+  <input type="text" name="descripcion" required />
+</label>
+
+<label>
+  Cantidad
+  <input type="number" name="cantidad" min="1" value="1" required />
+</label>
++
++  <label>
++    Especialidad
++    <select name="especialidad">
++      <option value="">(ninguna)</option>
++      {% for e in especialidades %}
++      <option value="{{ e }}">{{ e }}</option>
++      {% endfor %}
++    </select>
++  </label>
+
+<div style="grid-column:1 / -1">
+  <button type="submit" class="button-primary">
+    Añadir ítem
+  </button>
+</div>
+</form>
+
+<hr />
+
+<h4>Ítems registrados</h4>
+<table>
+  <thead>
+    <tr><th>TAG</th><th>Descripción</th><th>Cant.</th></tr>
+  </thead>
+  <tbody>
+    {% for it in items %}
+    <tr>
+      <td>{{ it.tag }}</td>
+      <td>{{ it.descripcion }}</td>
+      <td>{{ it.cantidad }}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock %}
+{% for it in items %}
+<tr>
+  <td>
+    <form action="/item/{{it.id}}" method="post">
+      <input type="hidden" name="_method" value="delete">
+      <button class="button-error">Borrar</button>
+    </form>
+  </td>
+  <td>
+    <form action="/item/{{it.id}}" method="post">
+      <input type="hidden" name="_method" value="put">
+      <input type="text" name="descripcion" value="{{it.descripcion}}">
+      <input type="number" name="cantidad" value="{{it.cantidad}}">
+      <button class="button">Guardar</button>
+    </form>
+  </td>
+</tr>
+{% endfor %}
+
+
+

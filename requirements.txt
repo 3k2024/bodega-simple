@@ -1,0 +1,10 @@
+fastapi
+uvicorn[standard]
+sqlmodel
+jinja2
+python-multipart
+pandas
+openpyxl
+reportlab
+passlib[bcrypt]
+python-jose[cryptography]

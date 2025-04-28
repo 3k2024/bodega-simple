@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% block content %}
+<h3>Ingreso manual masivo</h3>
+<p>Pega tus valores uno por línea, en el mismo orden:</p>
+
+<form action="/manual-import" method="post">
+  <label>GD (Número de guía):
+    <textarea name="id_guid_data" rows="5" style="width:100%" required></textarea>
+  </label>
+
+  <label>TAG:
+    <textarea name="tag_data" rows="5" style="width:100%" required></textarea>
+  </label>
+
+  <label>Descripción:
+    <textarea name="descripcion_data" rows="5" style="width:100%" required></textarea>
+  </label>
+
+  <label>Cantidad:
+    <textarea name="cantidad_data" rows="5" style="width:100%" required></textarea>
+  </label>
+
+  <label>Fecha:
+    <textarea name="fecha_data" rows="5" style="width:100%" required></textarea>
+  </label>
+
+  <label>Proveedor:
+    <textarea name="proveedor_data" rows="5" style="width:100%"></textarea>
+  </label>
+
+  <label>Observación:
+    <textarea name="observacion_data" rows="5" style="width:100%"></textarea>
+  </label>
+
+  <button type="submit" class="button-primary">Importar registros</button>
+</form>
+
+{% if error %}
+<p style="color:red">{{ error }}</p>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% block content %}
+<h3>Listado de guías</h3>
+
+{% for g in guias %}
+<details style="margin-bottom:1em">
+  <summary style="font-weight:bold">
+    Guía {{ g.id_guid }} — {{ g.fecha }}
+    {% if g.proveedor %}( {{ g.proveedor }} ){% endif %}
+    <a href="/delete-guia/{{ g.id_guid }}" style="color:red; margin-left:1rem;">Eliminar</a>
+  </summary>
+  </summary>
+  <table>
+    <thead>
+      <tr><th>TAG</th><th>Descripción</th><th>Cant.</th></tr>
+    </thead>
+    <tbody>
+      {% for it in g['items'] %}
+      <tr>
+        <td>{{ it.tag }}</td>
+        <td>{{ it.descripcion }}</td>
+        <td>{{ it.cantidad }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</details>
+{% endfor %}
+{% endblock %}

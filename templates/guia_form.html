@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+{% block content %}
+<h3>Crear guía e ítem inicial</h3>
+
+<form action="/nueva-guia" method="post" class="grid-2">
+  <label>GD (Número de guía):
+    <input type="text" name="id_guid" required>
+  </label>
+
+  <label>TAG:
+    <input type="text" name="tag" required>
+  </label>
+
+  <label>Descripción:
+    <input type="text" name="descripcion" required>
+  </label>
+
+  <label>Cantidad:
+    <input type="number" name="cantidad" min="0" value="0" required>
+  </label>
+
+  <label>Fecha:
+    <input type="date" name="fecha" value="{{ hoy }}" required>
+  </label>
+
+  <label>Proveedor:
+    <input type="text" name="proveedor" required>
+  </label>
+
+  <label>Especialidad:
+    <select name="especialidad" required>
+      <option value="">-- Selecciona --</option>
+      {% for e in especialidades %}
+      <option value="{{ e }}">{{ e }}</option>
+      {% endfor %}
+    </select>
+  </label>
+
+  <label>Observación:
+    <input type="text" name="observacion" required>
+  </label>
+
+  <div style="grid-column: 1 / -1; margin-top: 1rem;">
+    <button type="submit" class="button-primary">Crear guía</button>
+    {% if error %}
+      <p style="color:red; margin-top:0.5rem;">{{ error }}</p>
+    {% endif %}
+  </div>
+</form>
+{% endblock %}

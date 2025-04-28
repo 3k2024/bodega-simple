@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% block content %}
+<canvas id="chart"></canvas>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+fetch('/api/stats')
+  .then(res => res.json())
+  .then(data => {
+    const ctx = document.getElementById('chart');
+    new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: Object.keys(data),
+        datasets: [{ label: 'Ítems por especialidad', data: Object.values(data) }]
+      }
+    });
+  });
+</script>
+{% endblock %}

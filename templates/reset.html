@@ -1,0 +1,9 @@
+<!-- templates/reset.html -->
+{% extends "base.html" %}
+{% block content %}
+  <h3>Vaciar Base de Datos</h3>
+  <p>Esto eliminará <strong>todas</strong> las guías e ítems.</p>
+  <form action="/vaciar" method="post">
+    <button type="submit" class="button-error">Vaciar BD</button>
+  </form>
+{% endblock %}

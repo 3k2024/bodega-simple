@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+
+{% block content %}
+  <h3>Eliminar Guía {{ guia.id_guid }}</h3>
+  <p>¿Seguro que deseas eliminar la guía <strong>{{ guia.id_guid }}</strong> y todos sus ítems?</p>
+  <form action="/delete-guia/{{ guia.id_guid }}" method="post">
+    <button type="submit" class="button-error">Sí, eliminar</button>
+    <a href="/guias" class="button">Cancelar</a>
+  </form>
+{% endblock %}

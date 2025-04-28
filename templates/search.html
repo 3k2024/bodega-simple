@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% block content %}
+<form method="get" action="/search" class="grid-2">
+  <label>ID Guía: <input name="id_guid"></label>
+  <label>Proveedor: <input name="proveedor"></label>
+  <label>Fecha desde: <input type="date" name="date_from"></label>
+  <label>Fecha hasta: <input type="date" name="date_to"></label>
+  <button type="submit" class="button-primary">Buscar</button>
+</form>
+<hr/>
+<ul>
+  {% for g in results %}
+    <li><a href="/guia/{{g.id_guid}}">{{g.id_guid}}</a> — {{g.fecha}} — {{g.proveedor}}</li>
+  {% endfor %}
+</ul>
+{% endblock %}
