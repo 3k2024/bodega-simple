@@ -133,7 +133,8 @@ def login_usuario(form_data: OAuth2PasswordRequestForm = Depends(), db: Session 
         )
     
     access_token = create_access_token(
-        data={"sub": user.username, "role": user.role}
+        data={"sub": user.username, "role": user.role},    expires_delta=timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+
     )
     
     return {"access_token": access_token, "token_type": "bearer"}
