@@ -70,7 +70,9 @@ fake_users_db = {
 }
 
 # --- Auth Helpers ---
-def get_current_user(token: str = Depends(oauth2_scheme)):
+
+
+def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(get_session)):
     creds_exc = HTTPException(
         status.HTTP_401_UNAUTHORIZED,
         detail="No autorizado",
@@ -79,20 +81,31 @@ def get_current_user(token: str = Depends(oauth2_scheme)):
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
         username: str = payload.get("sub")
-        role: str    = payload.get("role")
+        role: str = payload.get("role")
         if not username or not role:
             raise creds_exc
     except JWTError:
         raise creds_exc
-    user = fake_users_db.get(username)
+
+    user = db.exec(select(User).where(User.username == username)).first()
     if not user:
         raise creds_exc
-    return {"username": username, "role": role}
+
+    return {"username": user.username, "role": user.role}
+
+
+
 
 def require_admin(user: dict = Depends(get_current_user)):
     if user["role"] != "admin":
         raise HTTPException(status.HTTP_403_FORBIDDEN, detail="Permiso denegado")
     return user
+
+
+
+
+
+
 
 @app.post("/token")
 def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_session)):
