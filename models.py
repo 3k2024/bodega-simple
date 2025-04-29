@@ -26,3 +26,11 @@ class Item(SQLModel, table=True):
     cantidad: int
     especialidad: Optional[EspecialidadEnum] = Field(default=None, nullable=True)
     id_guid: str = Field(foreign_key="guia.id_guid")
+from sqlmodel import SQLModel, Field
+from typing import Optional
+
+class User(SQLModel, table=True):
+    id: Optional[int] = Field(default=None, primary_key=True)
+    username: str = Field(index=True, unique=True)
+    hashed_password: str
+    role: str  # "admin" o "user"

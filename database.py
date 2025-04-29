@@ -1,4 +1,5 @@
 from sqlmodel import SQLModel, create_engine, Session
+from models import Guia, Item, User  # 👈 Aquí traemos también User
 
 engine = create_engine(
     "sqlite:///./bodega.db",
@@ -6,7 +7,6 @@ engine = create_engine(
 )
 
 def init_db():
-    from models import Guia, Item
     SQLModel.metadata.create_all(engine)
 
 def get_session():

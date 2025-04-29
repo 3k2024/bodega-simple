@@ -29,6 +29,20 @@ from auth import (
     ACCESS_TOKEN_EXPIRE_MINUTES
 )
 
+from models import User
+from fastapi.security import OAuth2PasswordRequestForm
+from sqlmodel import select
+
+
+
+
+
+
+
+
+
+
+
 # --- Inicialización de BD y App ---
 init_db()
 app = FastAPI(
@@ -94,6 +108,43 @@ def login(form_data: OAuth2PasswordRequestForm = Depends()):
         expires_delta=timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
     )
     return {"access_token": access_token, "token_type": "bearer"}
+
+
+
+
+#------LOGIN
+
+
+@app.post("/login")
+def login_usuario(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_session)):
+    statement = select(User).where(User.username == form_data.username)
+    user = db.exec(statement).first()
+    
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Usuario no encontrado"
+        )
+    
+    if not verify_password(form_data.password, user.hashed_password):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Contraseña incorrecta"
+        )
+    
+    access_token = create_access_token(
+        data={"sub": user.username, "role": user.role}
+    )
+    
+    return {"access_token": access_token, "token_type": "bearer"}
+
+
+
+
+
+
+
+
 
 
 # --- 1) Crear guía + primer ítem ---
