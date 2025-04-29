@@ -429,3 +429,23 @@ def stats(db: Session = Depends(get_session)):
         cnt = db.exec(select(Item).where(Item.especialidad==e)).count()
         data[e.value] = cnt
     return data
+
+
+#----USUARIOS TEMPORAL
+
+@app.post("/crear-bodega-user")
+def crear_bodega_user(db: Session = Depends(get_session), user: dict = Depends(require_admin)):
+    from models import User
+    from auth import get_password_hash
+
+    if db.exec(select(User).where(User.username == "bodega_user")).first():
+        raise HTTPException(status_code=400, detail="Usuario ya existe")
+
+    nuevo_user = User(
+        username="bodega_user",
+        hashed_password=get_password_hash("bodega123"),
+        role="user"
+    )
+    db.add(nuevo_user)
+    db.commit()
+    return {"msg": "Usuario bodega_user creado exitosamente"}
