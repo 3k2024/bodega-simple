@@ -34,7 +34,7 @@
       if (response.ok) {
         const data = await response.json();
         localStorage.setItem("token", data.access_token);
-        window.location.href = "/guias";  // Redirige al listado de guías
+        window.location.href = "/";  // Redirige a la página principal (guías)
       } else {
         document.getElementById("mensajeError").innerText = "Login incorrecto.";
       }
