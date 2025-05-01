@@ -1,5 +1,13 @@
 {% extends "base.html" %}
 {% block content %}
+
+<script>
+  const token = localStorage.getItem("access_token");
+  if (!token) {
+    window.location.href = "/login";
+  }
+</script>
+
 <h3>Crear guía e ítem inicial</h3>
 
 <form action="/nueva-guia" method="post" class="grid-2">
@@ -47,4 +55,5 @@
     {% endif %}
   </div>
 </form>
+
 {% endblock %}

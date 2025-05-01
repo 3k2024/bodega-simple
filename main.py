@@ -133,6 +133,7 @@ def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depend
 
 
 @app.post("/login")
+
 def login_usuario(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_session)):
     statement = select(User).where(User.username == form_data.username)
     user = db.exec(statement).first()
@@ -166,14 +167,27 @@ def login_usuario(form_data: OAuth2PasswordRequestForm = Depends(), db: Session 
 
 
 # --- 1) Crear guía + primer ítem ---
-@app.get("/", response_class=HTMLResponse)
-def form_guia(request: Request):
-    hoy = datetime.today().date().isoformat()
-    esp = [e.value for e in EspecialidadEnum]
-    return templates.TemplateResponse(
-        "guia_form.html",
-        {"request": request, "hoy": hoy, "error": None, "especialidades": esp}
-    )
+def get_current_user(
+    request: Request,
+    token: str = Depends(oauth2_scheme),
+    db: Session = Depends(get_session)
+):
+    try:
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        username: str = payload.get("sub")
+        role: str = payload.get("role")
+        if not username or not role:
+            raise HTTPException(status_code=303, headers={"Location": "/login"})
+    except JWTError:
+        raise HTTPException(status_code=303, headers={"Location": "/login"})
+
+    user = db.exec(select(User).where(User.username == username)).first()
+    if not user:
+        raise HTTPException(status_code=303, headers={"Location": "/login"})
+
+    return user
+
+
 
 @app.post("/nueva-guia", response_class=HTMLResponse)
 def nueva_guia(
