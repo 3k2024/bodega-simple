@@ -1,9 +1,7 @@
 # main.py
-
 from typing import Optional
 from datetime import datetime, timedelta
 import io
-
 from fastapi import (
     FastAPI, Request, Depends, HTTPException, status,
     Form, Security, File, UploadFile
@@ -12,15 +10,11 @@ from fastapi.responses import RedirectResponse, HTMLResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
-
 from sqlmodel import Session, select, delete
-
 import pandas as pd
 from reportlab.lib.pagesizes import letter
 from reportlab.pdfgen import canvas
-
 from jose import jwt, JWTError
-
 from database import init_db, get_session
 from models import Guia, Item, EspecialidadEnum
 from auth import (
@@ -28,20 +22,10 @@ from auth import (
     create_access_token, SECRET_KEY, ALGORITHM,
     ACCESS_TOKEN_EXPIRE_MINUTES
 )
-
 from models import User
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlmodel import select
-
-
-
-
-
-
-
-
-
-
+from fastapi.responses import RedirectResponse
 
 # --- Inicialización de BD y App ---
 init_db()
@@ -69,8 +53,7 @@ fake_users_db = {
     }
 }
 
-# --- Auth Helpers ---
-
+# --- get_current_user ---
 
 def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(get_session)):
     creds_exc = HTTPException(
@@ -93,19 +76,12 @@ def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(
 
     return {"username": user.username, "role": user.role}
 
-
-
+# --- require_admin ---
 
 def require_admin(user: dict = Depends(get_current_user)):
     if user["role"] != "admin":
         raise HTTPException(status.HTTP_403_FORBIDDEN, detail="Permiso denegado")
     return user
-
-
-
-
-
-
 
 @app.post("/token")
 def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_session)):
@@ -126,14 +102,9 @@ def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depend
     return {"access_token": access_token, "token_type": "bearer"}
 
 
-
-
-
-#------LOGIN
-
+#------login_usuario
 
 @app.post("/login")
-
 def login_usuario(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_session)):
     statement = select(User).where(User.username == form_data.username)
     user = db.exec(statement).first()
@@ -157,38 +128,21 @@ def login_usuario(form_data: OAuth2PasswordRequestForm = Depends(), db: Session 
     
     return {"access_token": access_token, "token_type": "bearer"}
 
+# --get_current_user---
+@app.get("/", response_class=HTMLResponse)
+def form_guia(request: Request, user: User = Depends(get_current_user)):
+    if isinstance(user, RedirectResponse):  # Si no está logueado, redirige
+        return user
+
+    hoy = datetime.today().date().isoformat()
+    esp = [e.value for e in EspecialidadEnum]
+    return templates.TemplateResponse(
+        "guia_form.html",
+        {"request": request, "hoy": hoy, "error": None, "especialidades": esp, "user": user.username}
+    )
 
 
-
-
-
-
-
-
-
-# --- 1) Crear guía + primer ítem ---
-def get_current_user(
-    request: Request,
-    token: str = Depends(oauth2_scheme),
-    db: Session = Depends(get_session)
-):
-    try:
-        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-        username: str = payload.get("sub")
-        role: str = payload.get("role")
-        if not username or not role:
-            raise HTTPException(status_code=303, headers={"Location": "/login"})
-    except JWTError:
-        raise HTTPException(status_code=303, headers={"Location": "/login"})
-
-    user = db.exec(select(User).where(User.username == username)).first()
-    if not user:
-        raise HTTPException(status_code=303, headers={"Location": "/login"})
-
-    return user
-
-
-
+# --nueva_guia--->>>>
 @app.post("/nueva-guia", response_class=HTMLResponse)
 def nueva_guia(
     request: Request,
