@@ -26,6 +26,7 @@ from models import User
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlmodel import select
 from fastapi.responses import RedirectResponse
+from fastapi.responses import HTMLResponse
 
 # --- Inicialización de BD y App ---
 init_db()
@@ -105,6 +106,11 @@ def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depend
 #------login_usuario
 
 @app.post("/login")
+@app.get("/login", response_class=HTMLResponse)
+def login_form(request: Request):
+    return templates.TemplateResponse("login.html", {"request": request})
+
+
 def login_usuario(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_session)):
     statement = select(User).where(User.username == form_data.username)
     user = db.exec(statement).first()
