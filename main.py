@@ -84,7 +84,7 @@ def get_current_user(
         username = payload.get("sub")
         role = payload.get("role")
         if not username or not role:
-        raise HTTPException(status.HTTP_401_UNAUTHORIZED, detail='No autorizado')
+            raise HTTPException(status.HTTP_401_UNAUTHORIZED, detail='No autorizado')
     except JWTError:
         raise HTTPException(status.HTTP_401_UNAUTHORIZED, detail='No autorizado')
 
@@ -93,6 +93,7 @@ def get_current_user(
         raise HTTPException(status.HTTP_401_UNAUTHORIZED, detail='No autorizado')
 
     return {"username": user.username, "role": user.role}
+
 
 
 
