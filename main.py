@@ -27,6 +27,22 @@ from fastapi.security import OAuth2PasswordRequestForm
 from sqlmodel import select
 from fastapi.responses import RedirectResponse
 from fastapi.responses import HTMLResponse
+from fastapi.responses import RedirectResponse
+
+from fastapi.responses import RedirectResponse
+from fastapi.requests import Request
+from fastapi.exception_handlers import http_exception_handler
+from starlette.exceptions import HTTPException as StarletteHTTPException
+from fastapi.requests import Request
+from fastapi.responses import RedirectResponse
+from fastapi.exception_handlers import http_exception_handler
+from starlette.exceptions import HTTPException as StarletteHTTPException
+
+from fastapi.requests import Request
+from fastapi.responses import RedirectResponse
+from fastapi.exception_handlers import http_exception_handler
+from starlette.exceptions import HTTPException as StarletteHTTPException
+
 
 # --- Inicialización de BD y App ---
 init_db()
@@ -54,28 +70,32 @@ fake_users_db = {
     }
 }
 
-# --- get_current_user ---
+def get_current_user(
+    token: Optional[str] = Depends(oauth2_scheme),
+    access_token_cookie: Optional[str] = Cookie(None),
+    db: Session = Depends(get_session)
+):
+    token_to_use = token or (access_token_cookie.replace("Bearer ", "") if access_token_cookie else None)
+    if not token_to_use:
+        return RedirectResponse(url="/login", status_code=303)
 
-def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(get_session)):
-    creds_exc = HTTPException(
-        status.HTTP_401_UNAUTHORIZED,
-        detail="No autorizado",
-        headers={"WWW-Authenticate": "Bearer"},
-    )
     try:
-        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-        username: str = payload.get("sub")
-        role: str = payload.get("role")
+        payload = jwt.decode(token_to_use, SECRET_KEY, algorithms=[ALGORITHM])
+        username = payload.get("sub")
+        role = payload.get("role")
         if not username or not role:
-            raise creds_exc
+            return RedirectResponse(url="/login", status_code=303)
     except JWTError:
-        raise creds_exc
+        return RedirectResponse(url="/login", status_code=303)
 
     user = db.exec(select(User).where(User.username == username)).first()
     if not user:
-        raise creds_exc
+        return RedirectResponse(url="/login", status_code=303)
 
     return {"username": user.username, "role": user.role}
+
+
+
 
 # --- require_admin ---
 
@@ -85,6 +105,7 @@ def require_admin(user: dict = Depends(get_current_user)):
     return user
 
 @app.post("/token")
+
 def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_session)):
     statement = select(User).where(User.username == form_data.username)
     user = db.exec(statement).first()
@@ -104,48 +125,48 @@ def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depend
 
 
 #------login_usuario
-
-@app.post("/login")
 @app.get("/login", response_class=HTMLResponse)
 def login_form(request: Request):
     return templates.TemplateResponse("login.html", {"request": request})
 
+@app.post("/login")
+def login_usuario(
+    request: Request,
+    username: str = Form(...),
+    password: str = Form(...),
+    db: Session = Depends(get_session)
+):
+    user = db.exec(select(User).where(User.username == username)).first()
 
-def login_usuario(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_session)):
-    statement = select(User).where(User.username == form_data.username)
-    user = db.exec(statement).first()
-    
-    if not user:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Usuario no encontrado"
+    if not user or not verify_password(password, user.hashed_password):
+        return templates.TemplateResponse(
+            "login.html",
+            {"request": request, "error": "Credenciales inválidas"},
+            status_code=status.HTTP_401_UNAUTHORIZED
         )
-    
-    if not verify_password(form_data.password, user.hashed_password):
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Contraseña incorrecta"
-        )
-    
+
     access_token = create_access_token(
-        data={"sub": user.username, "role": user.role},    expires_delta=timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
-
+        data={"sub": user.username, "role": user.role},
+        expires_delta=timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
     )
-    
-    return {"access_token": access_token, "token_type": "bearer"}
+
+    response = RedirectResponse(url="/", status_code=303)
+    response.set_cookie(key="access_token", value=f"Bearer {access_token}", httponly=True)
+    return response
+
+
 
 # --get_current_user---
-@app.get("/", response_class=HTMLResponse)
-def form_guia(request: Request, user: User = Depends(get_current_user)):
-    if isinstance(user, RedirectResponse):  # Si no está logueado, redirige
-        return user
 
+@app.get("/", response_class=HTMLResponse)
+def form_guia(request: Request, user: dict = Depends(get_current_user)):
     hoy = datetime.today().date().isoformat()
     esp = [e.value for e in EspecialidadEnum]
     return templates.TemplateResponse(
         "guia_form.html",
-        {"request": request, "hoy": hoy, "error": None, "especialidades": esp, "user": user.username}
+        {"request": request, "hoy": hoy, "error": None, "especialidades": esp, "user": user["username"]}
     )
+
 
 
 # --nueva_guia--->>>>
@@ -440,3 +461,26 @@ def crear_bodega_user(db: Session = Depends(get_session), user: dict = Depends(r
     db.add(nuevo_user)
     db.commit()
     return {"msg": "Usuario bodega_user creado exitosamente"}
+
+
+
+@app.exception_handler(StarletteHTTPException)
+async def redirect_on_401(request: Request, exc: StarletteHTTPException):
+    if exc.status_code == 401:
+        return RedirectResponse(url="/login", status_code=303)
+    return await http_exception_handler(request, exc)
+
+
+@app.exception_handler(StarletteHTTPException)
+async def custom_http_exception_handler(request: Request, exc: StarletteHTTPException):
+    if exc.status_code == 401 and request.url.path == "/":
+        return RedirectResponse(url="/login", status_code=303)
+    return await http_exception_handler(request, exc)
+
+
+@app.exception_handler(StarletteHTTPException)
+async def custom_http_exception_handler(request: Request, exc: StarletteHTTPException):
+    if exc.status_code == 401 and request.url.path == "/":
+        return RedirectResponse(url="/login", status_code=303)
+    return await http_exception_handler(request, exc)
+
