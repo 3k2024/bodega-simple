@@ -1,19 +1,42 @@
 {% extends "base.html" %}
 {% block content %}
-<canvas id="chart"></canvas>
+<h3>Dashboard: Ítems por Especialidad</h3>
+<canvas id="chart" aria-label="Gráfico de ítems por especialidad" role="img"></canvas>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
 fetch('/api/stats')
-  .then(res => res.json())
+  .then(res => {
+    if (!res.ok) {
+      throw new Error('Error al cargar los datos');
+    }
+    return res.json();
+  })
   .then(data => {
     const ctx = document.getElementById('chart');
     new Chart(ctx, {
       type: 'bar',
       data: {
         labels: Object.keys(data),
-        datasets: [{ label: 'Ítems por especialidad', data: Object.values(data) }]
+        datasets: [{
+          label: 'Ítems por especialidad',
+          data: Object.values(data),
+          backgroundColor: 'rgba(75, 192, 192, 0.2)',
+          borderColor: 'rgba(75, 192, 192, 1)',
+          borderWidth: 1
+        }]
+      },
+      options: {
+        responsive: true,
+        plugins: {
+          legend: { display: true },
+          tooltip: { enabled: true }
+        }
       }
     });
+  })
+  .catch(error => {
+    console.error(error);
+    alert('No se pudieron cargar los datos del gráfico.');
   });
 </script>
 {% endblock %}

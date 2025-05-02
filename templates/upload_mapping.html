@@ -3,13 +3,13 @@
 <h3>Asignar columnas (paso 2/2)</h3>
 <form action="/upload-excel" method="post" enctype="multipart/form-data">
   <!-- Reenvía el archivo original -->
-  <input type="hidden" name="file" value=""> 
+  <input type="hidden" name="file" value="{{ file }}"> 
 
   {% for f in ["id_guid:Guía","fecha:Fecha","tag:TAG",
                "descripcion:Descripción","cantidad:Cantidad"] %}
   {% set field, label = f.split(':') %}
-  <label>{{ label }}:
-    <select name="col_{{ field }}" required>
+  <label for="col_{{ field }}">{{ label }}:
+    <select id="col_{{ field }}" name="col_{{ field }}" required aria-required="true" aria-label="Seleccionar columna para {{ label }}">
       <option value="">-- selecciona columna --</option>
       {% for c in columns %}
       <option value="{{ c }}">{{ c }}</option>
@@ -18,20 +18,20 @@
   </label>
   {% endfor %}
 
-  <label>Proveedor (opcional):
-    <select name="col_proveedor">
+  <label for="col_proveedor">Proveedor (opcional):
+    <select id="col_proveedor" name="col_proveedor" aria-label="Seleccionar columna para Proveedor">
       <option value="">(ninguno)</option>
       {% for c in columns %}<option>{{ c }}</option>{% endfor %}
     </select>
   </label>
 
-  <label>Observación (opcional):
-    <select name="col_observacion">
+  <label for="col_observacion">Observación (opcional):
+    <select id="col_observacion" name="col_observacion" aria-label="Seleccionar columna para Observación">
       <option value="">(ninguno)</option>
       {% for c in columns %}<option>{{ c }}</option>{% endfor %}
     </select>
   </label>
 
-  <button type="submit" class="button-primary">Importar todo</button>
+  <button type="submit" class="button-primary" aria-label="Importar datos del archivo Excel">Importar todo</button>
 </form>
 {% endblock %}

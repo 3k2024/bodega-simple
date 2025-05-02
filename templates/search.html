@@ -1,16 +1,33 @@
 {% extends "base.html" %}
 {% block content %}
+<h3>Buscar Guías</h3>
 <form method="get" action="/search" class="grid-2">
-  <label>ID Guía: <input name="id_guid"></label>
-  <label>Proveedor: <input name="proveedor"></label>
-  <label>Fecha desde: <input type="date" name="date_from"></label>
-  <label>Fecha hasta: <input type="date" name="date_to"></label>
+  <label for="id_guid">ID Guía:
+    <input id="id_guid" name="id_guid" aria-label="Buscar por ID de guía">
+  </label>
+  <label for="proveedor">Proveedor:
+    <input id="proveedor" name="proveedor" aria-label="Buscar por proveedor">
+  </label>
+  <label for="date_from">Fecha desde:
+    <input id="date_from" type="date" name="date_from" aria-label="Buscar desde esta fecha">
+  </label>
+  <label for="date_to">Fecha hasta:
+    <input id="date_to" type="date" name="date_to" aria-label="Buscar hasta esta fecha">
+  </label>
   <button type="submit" class="button-primary">Buscar</button>
 </form>
 <hr/>
+{% if results %}
 <ul>
   {% for g in results %}
-    <li><a href="/guia/{{g.id_guid}}">{{g.id_guid}}</a> — {{g.fecha}} — {{g.proveedor}}</li>
+    <li>
+      <a href="/guia/{{g.id_guid}}" aria-label="Ver detalles de la guía {{g.id_guid}}">
+        {{g.id_guid}}
+      </a> — {{g.fecha}} — {{g.proveedor}}
+    </li>
   {% endfor %}
 </ul>
+{% else %}
+<p>No se encontraron resultados para los criterios de búsqueda.</p>
+{% endif %}
 {% endblock %}

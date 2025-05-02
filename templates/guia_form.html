@@ -11,32 +11,32 @@
 <h3>Crear guía e ítem inicial</h3>
 
 <form action="/nueva-guia" method="post" class="grid-2">
-  <label>GD (Número de guía):
-    <input type="text" name="id_guid" required>
+  <label for="id_guid">GD (Número de guía):
+    <input type="text" id="id_guid" name="id_guid" required aria-required="true">
   </label>
 
-  <label>TAG:
-    <input type="text" name="tag" required>
+  <label for="tag">TAG:
+    <input type="text" id="tag" name="tag" required aria-required="true">
   </label>
 
-  <label>Descripción:
-    <input type="text" name="descripcion" required>
+  <label for="descripcion">Descripción:
+    <input type="text" id="descripcion" name="descripcion" required aria-required="true">
   </label>
 
-  <label>Cantidad:
-    <input type="number" name="cantidad" min="0" value="0" required>
+  <label for="cantidad">Cantidad:
+    <input type="number" id="cantidad" name="cantidad" min="0" value="0" required aria-required="true">
   </label>
 
-  <label>Fecha:
-    <input type="date" name="fecha" value="{{ hoy }}" required>
+  <label for="fecha">Fecha:
+    <input type="date" id="fecha" name="fecha" value="{{ hoy }}" required aria-required="true">
   </label>
 
-  <label>Proveedor:
-    <input type="text" name="proveedor" required>
+  <label for="proveedor">Proveedor:
+    <input type="text" id="proveedor" name="proveedor" required aria-required="true">
   </label>
 
-  <label>Especialidad:
-    <select name="especialidad" required>
+  <label for="especialidad">Especialidad:
+    <select id="especialidad" name="especialidad" required aria-required="true">
       <option value="">-- Selecciona --</option>
       {% for e in especialidades %}
       <option value="{{ e }}">{{ e }}</option>
@@ -44,8 +44,8 @@
     </select>
   </label>
 
-  <label>Observación:
-    <input type="text" name="observacion" required>
+  <label for="observacion">Observación:
+    <input type="text" id="observacion" name="observacion" required aria-required="true">
   </label>
 
   <div style="grid-column: 1 / -1; margin-top: 1rem;">

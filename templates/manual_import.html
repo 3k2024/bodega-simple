@@ -4,32 +4,32 @@
 <p>Pega tus valores uno por línea, en el mismo orden:</p>
 
 <form action="/manual-import" method="post">
-  <label>GD (Número de guía):
-    <textarea name="id_guid_data" rows="5" style="width:100%" required></textarea>
+  <label for="id_guid_data">GD (Número de guía):
+    <textarea id="id_guid_data" name="id_guid_data" rows="5" style="width:100%" required aria-required="true"></textarea>
   </label>
 
-  <label>TAG:
-    <textarea name="tag_data" rows="5" style="width:100%" required></textarea>
+  <label for="tag_data">TAG:
+    <textarea id="tag_data" name="tag_data" rows="5" style="width:100%" required aria-required="true"></textarea>
   </label>
 
-  <label>Descripción:
-    <textarea name="descripcion_data" rows="5" style="width:100%" required></textarea>
+  <label for="descripcion_data">Descripción:
+    <textarea id="descripcion_data" name="descripcion_data" rows="5" style="width:100%" required aria-required="true"></textarea>
   </label>
 
-  <label>Cantidad:
-    <textarea name="cantidad_data" rows="5" style="width:100%" required></textarea>
+  <label for="cantidad_data">Cantidad:
+    <textarea id="cantidad_data" name="cantidad_data" rows="5" style="width:100%" required aria-required="true"></textarea>
   </label>
 
-  <label>Fecha:
-    <textarea name="fecha_data" rows="5" style="width:100%" required></textarea>
+  <label for="fecha_data">Fecha:
+    <textarea id="fecha_data" name="fecha_data" rows="5" style="width:100%" required aria-required="true"></textarea>
   </label>
 
-  <label>Proveedor:
-    <textarea name="proveedor_data" rows="5" style="width:100%"></textarea>
+  <label for="proveedor_data">Proveedor:
+    <textarea id="proveedor_data" name="proveedor_data" rows="5" style="width:100%"></textarea>
   </label>
 
-  <label>Observación:
-    <textarea name="observacion_data" rows="5" style="width:100%"></textarea>
+  <label for="observacion_data">Observación:
+    <textarea id="observacion_data" name="observacion_data" rows="5" style="width:100%"></textarea>
   </label>
 
   <button type="submit" class="button-primary">Importar registros</button>

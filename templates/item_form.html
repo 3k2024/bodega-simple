@@ -2,68 +2,63 @@
 {% block content %}
 <h3>Agregar ítems a guía {{ guia.id_guid }}</h3>
 
-<form
-action="/guia/{{ guia.id_guid }}/agregar-item"
-method="post"
-class="grid-2"
-style="margin-bottom:20px"
->
-<form action="/guia/{{guia.id_guid}}/upload" method="post" enctype="multipart/form-data">
-  <input type="file" name="file" accept="image/*,application/pdf" required>
+<!-- Formulario para agregar ítems -->
+<form action="/guia/{{ guia.id_guid }}/agregar-item" method="post" class="grid-2" style="margin-bottom:20px">
+  <label>
+    TAG
+    <input type="text" name="tag" required aria-required="true" />
+  </label>
+
+  <label>
+    Descripción
+    <input type="text" name="descripcion" required aria-required="true" />
+  </label>
+
+  <label>
+    Cantidad
+    <input type="number" name="cantidad" min="1" value="1" required aria-required="true" />
+  </label>
+
+  <label>
+    Especialidad
+    <select name="especialidad" required aria-required="true">
+      <option value="">(ninguna)</option>
+      {% for e in especialidades %}
+      <option value="{{ e }}">{{ e }}</option>
+      {% endfor %}
+    </select>
+  </label>
+
+  <div style="grid-column:1 / -1">
+    <button type="submit" class="button-primary">Añadir ítem</button>
+  </div>
+</form>
+
+<!-- Formulario para subir documentos -->
+<form action="/guia/{{ guia.id_guid }}/upload" method="post" enctype="multipart/form-data" style="margin-bottom:20px">
+  <input type="file" name="file" accept="image/*,application/pdf" required aria-required="true">
   <button class="button-primary">Adjuntar documento</button>
 </form>
+
+<!-- Lista de documentos -->
 <ul>
   {% for doc in guia.documents %}
-    <li><a href="{{doc.path}}" target="_blank">{{doc.filename}}</a></li>
+  <li><a href="{{ doc.path }}" target="_blank">{{ doc.filename }}</a></li>
   {% endfor %}
 </ul>
 
-
-
-
-
-
-
-
-
-<label>
-  TAG
-  <input type="text" name="tag" required />
-</label>
-
-<label>
-  Descripción
-  <input type="text" name="descripcion" required />
-</label>
-
-<label>
-  Cantidad
-  <input type="number" name="cantidad" min="1" value="1" required />
-</label>
-+
-+  <label>
-+    Especialidad
-+    <select name="especialidad">
-+      <option value="">(ninguna)</option>
-+      {% for e in especialidades %}
-+      <option value="{{ e }}">{{ e }}</option>
-+      {% endfor %}
-+    </select>
-+  </label>
-
-<div style="grid-column:1 / -1">
-  <button type="submit" class="button-primary">
-    Añadir ítem
-  </button>
-</div>
-</form>
-
 <hr />
 
+<!-- Tabla de ítems registrados -->
 <h4>Ítems registrados</h4>
 <table>
   <thead>
-    <tr><th>TAG</th><th>Descripción</th><th>Cant.</th></tr>
+    <tr>
+      <th>TAG</th>
+      <th>Descripción</th>
+      <th>Cant.</th>
+      <th>Acciones</th>
+    </tr>
   </thead>
   <tbody>
     {% for it in items %}
@@ -71,29 +66,25 @@ style="margin-bottom:20px"
       <td>{{ it.tag }}</td>
       <td>{{ it.descripcion }}</td>
       <td>{{ it.cantidad }}</td>
+      <td>
+        <!-- Formulario para eliminar ítem -->
+        <form action="/item/{{ it.id }}" method="post" style="display:inline;">
+          <input type="hidden" name="_method" value="delete">
+          <button class="button-error" aria-label="Eliminar ítem {{ it.tag }}">Borrar</button>
+        </form>
+        <!-- Formulario para editar ítem -->
+        <form action="/item/{{ it.id }}" method="post" style="display:inline;">
+          <input type="hidden" name="_method" value="put">
+          <input type="text" name="descripcion" value="{{ it.descripcion }}" required>
+          <input type="number" name="cantidad" value="{{ it.cantidad }}" min="1" required>
+          <button class="button" aria-label="Guardar cambios en ítem {{ it.tag }}">Guardar</button>
+        </form>
+      </td>
     </tr>
     {% endfor %}
   </tbody>
 </table>
 {% endblock %}
-{% for it in items %}
-<tr>
-  <td>
-    <form action="/item/{{it.id}}" method="post">
-      <input type="hidden" name="_method" value="delete">
-      <button class="button-error">Borrar</button>
-    </form>
-  </td>
-  <td>
-    <form action="/item/{{it.id}}" method="post">
-      <input type="hidden" name="_method" value="put">
-      <input type="text" name="descripcion" value="{{it.descripcion}}">
-      <input type="number" name="cantidad" value="{{it.cantidad}}">
-      <button class="button">Guardar</button>
-    </form>
-  </td>
-</tr>
-{% endfor %}
 
 
 

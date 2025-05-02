@@ -7,12 +7,19 @@
   <summary style="font-weight:bold">
     Guía {{ g.id_guid }} — {{ g.fecha }}
     {% if g.proveedor %}( {{ g.proveedor }} ){% endif %}
-    <a href="/delete-guia/{{ g.id_guid }}" style="color:red; margin-left:1rem;">Eliminar</a>
+    <form action="/delete-guia/{{ g.id_guid }}" method="post" style="display:inline;">
+      <button type="submit" style="color:red; margin-left:1rem;" aria-label="Eliminar guía {{ g.id_guid }}">
+        Eliminar
+      </button>
+    </form>
   </summary>
-  </summary>
-  <table>
+  <table class="table">
     <thead>
-      <tr><th>TAG</th><th>Descripción</th><th>Cant.</th></tr>
+      <tr>
+        <th>TAG</th>
+        <th>Descripción</th>
+        <th>Cant.</th>
+      </tr>
     </thead>
     <tbody>
       {% for it in g['items'] %}

@@ -1,6 +1,7 @@
 from enum import Enum as PyEnum
 from typing import Optional
 from sqlmodel import SQLModel, Field
+from datetime import date
 
 class EspecialidadEnum(str, PyEnum):
     ESTRUCTURA             = "Estructura"
@@ -15,7 +16,7 @@ class EspecialidadEnum(str, PyEnum):
 
 class Guia(SQLModel, table=True):
     id_guid: str = Field(primary_key=True, index=True)
-    fecha: str
+    fecha: date  # Cambiado de str a date para mayor precisión
     proveedor: Optional[str] = None
     observacion: Optional[str] = None
 
@@ -26,8 +27,6 @@ class Item(SQLModel, table=True):
     cantidad: int
     especialidad: Optional[EspecialidadEnum] = Field(default=None, nullable=True)
     id_guid: str = Field(foreign_key="guia.id_guid")
-from sqlmodel import SQLModel, Field
-from typing import Optional
 
 class User(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)

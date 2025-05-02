@@ -3,7 +3,7 @@
 {% block content %}
   <h3>Vaciar Base de Datos</h3>
   <p>Esto eliminará <strong>todas</strong> las guías e ítems.</p>
-  <form action="/vaciar" method="post">
-    <button type="submit" class="button-error">Vaciar BD</button>
+  <form action="/vaciar" method="post" onsubmit="return confirm('¿Estás seguro de que deseas vaciar la base de datos? Esta acción no se puede deshacer.')">
+    <button type="submit" class="button-error" aria-label="Vaciar la base de datos">Vaciar BD</button>
   </form>
 {% endblock %}
