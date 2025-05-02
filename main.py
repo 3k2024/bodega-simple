@@ -26,8 +26,8 @@ from auth import (
 # --- Inicialización de BD y App ---
 init_db()
 app = FastAPI(
-    title="Bodega Internacional",    pip install --upgrade fastapi uvicorn
-    docs_url="/Escritorio",  # Habilita la documentación en /docs
+    title="Bodega Internacional",
+    docs_url="/docs",  # Habilita la documentación en /docs
     redoc_url="/redoc",  # Habilita la documentación alternativa en /redoc
     openapi_url="/api/openapi.json"  # Esquema OpenAPI en esta ruta
 )
