@@ -77,20 +77,20 @@ def get_current_user(
 ):
     token_to_use = token or (access_token_cookie.replace("Bearer ", "") if access_token_cookie else None)
     if not token_to_use:
-        return RedirectResponse(url="/login", status_code=303)
+        raise HTTPException(status.HTTP_401_UNAUTHORIZED, detail='No autorizado')
 
     try:
         payload = jwt.decode(token_to_use, SECRET_KEY, algorithms=[ALGORITHM])
         username = payload.get("sub")
         role = payload.get("role")
         if not username or not role:
-            return RedirectResponse(url="/login", status_code=303)
+        raise HTTPException(status.HTTP_401_UNAUTHORIZED, detail='No autorizado')
     except JWTError:
-        return RedirectResponse(url="/login", status_code=303)
+        raise HTTPException(status.HTTP_401_UNAUTHORIZED, detail='No autorizado')
 
     user = db.exec(select(User).where(User.username == username)).first()
     if not user:
-        return RedirectResponse(url="/login", status_code=303)
+        raise HTTPException(status.HTTP_401_UNAUTHORIZED, detail='No autorizado')
 
     return {"username": user.username, "role": user.role}
 
@@ -465,22 +465,26 @@ def crear_bodega_user(db: Session = Depends(get_session), user: dict = Depends(r
 
 
 @app.exception_handler(StarletteHTTPException)
+    if exc.status_code == 401:
+        raise HTTPException(status.HTTP_401_UNAUTHORIZED, detail='No autorizado')
+    return await http_exception_handler(request, exc)
+
+
+@app.exception_handler(StarletteHTTPException)
+    if exc.status_code == 401 and request.url.path == "/":
+        raise HTTPException(status.HTTP_401_UNAUTHORIZED, detail='No autorizado')
+    return await http_exception_handler(request, exc)
+
+
+@app.exception_handler(StarletteHTTPException)
+    if exc.status_code == 401 and request.url.path == "/":
+        raise HTTPException(status.HTTP_401_UNAUTHORIZED, detail='No autorizado')
+    return await http_exception_handler(request, exc)
+
+
+
+@app.exception_handler(StarletteHTTPException)
 async def redirect_on_401(request: Request, exc: StarletteHTTPException):
     if exc.status_code == 401:
         return RedirectResponse(url="/login", status_code=303)
     return await http_exception_handler(request, exc)
-
-
-@app.exception_handler(StarletteHTTPException)
-async def custom_http_exception_handler(request: Request, exc: StarletteHTTPException):
-    if exc.status_code == 401 and request.url.path == "/":
-        return RedirectResponse(url="/login", status_code=303)
-    return await http_exception_handler(request, exc)
-
-
-@app.exception_handler(StarletteHTTPException)
-async def custom_http_exception_handler(request: Request, exc: StarletteHTTPException):
-    if exc.status_code == 401 and request.url.path == "/":
-        return RedirectResponse(url="/login", status_code=303)
-    return await http_exception_handler(request, exc)
-
