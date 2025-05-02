@@ -1,7 +1,7 @@
 # main.py
 from typing import Optional
 from datetime import datetime, timedelta
-import io
+import os  # Asegúrate de importar os
 from fastapi import (
     FastAPI, Request, Depends, HTTPException, status,
     Form, Security, File, UploadFile, Cookie
@@ -11,12 +11,10 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from sqlmodel import Session, select, delete
-import pandas as pd
-from reportlab.lib.pagesizes import letter
-from reportlab.pdfgen import canvas
 from jose import jwt, JWTError
 from starlette.exceptions import HTTPException as StarletteHTTPException
 from fastapi.exception_handlers import http_exception_handler
+import uvicorn
 from database import init_db, get_session
 from models import Guia, Item, EspecialidadEnum, User
 from auth import (
@@ -28,14 +26,19 @@ from auth import (
 # --- Inicialización de BD y App ---
 init_db()
 app = FastAPI(
-    title="Bodega Internacional",
-    docs_url=None,
-    redoc_url=None,
-    openapi_url="/api/openapi.json"
+    title="Bodega Internacional",    pip install --upgrade fastapi uvicorn
+    docs_url="/Escritorio",  # Habilita la documentación en /docs
+    redoc_url="/redoc",  # Habilita la documentación alternativa en /redoc
+    openapi_url="/api/openapi.json"  # Esquema OpenAPI en esta ruta
 )
 app.mount("/static", StaticFiles(directory="static"), name="static")
 app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")
 templates = Jinja2Templates(directory="templates")
+
+# --- Ruta de prueba ---
+@app.get("/ping")
+def ping():
+    return {"message": "pong"}
 
 # --- Usuarios de ejemplo (in-memory) ---
 fake_users_db = {
@@ -144,3 +147,7 @@ async def redirect_on_401(request: Request, exc: StarletteHTTPException):
     if exc.status_code == 401:
         return RedirectResponse(url="/login", status_code=303)
     return await http_exception_handler(request, exc)
+
+if __name__ == "__main__":
+    port = int(os.getenv("PORT", 8000))  # Render asigna el puerto a través de la variable PORT
+    uvicorn.run("main:app", host="0.0.0.0", port=port)
