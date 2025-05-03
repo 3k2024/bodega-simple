@@ -3,11 +3,7 @@ from sqlmodel import SQLModel, create_engine, Session
 from models import Guia, Item, User  # Asegúrate de importar todos los modelos necesarios
 
 # Usar una variable de entorno para la cadena de conexión
-DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./bodega.db")  # Cambia esto si usas PostgreSQL
-
-# Configuración para PostgreSQL
-if DATABASE_URL.startswith("postgres://"):
-    DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://", 1)  # Render usa "postgres://"
+DATABASE_URL = "sqlite:///bodega.db"
 
 # Crear el motor de la base de datos
 engine = create_engine(DATABASE_URL, echo=True)

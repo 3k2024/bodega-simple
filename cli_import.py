@@ -3,6 +3,8 @@ import pandas as pd
 from sqlmodel import Session
 from models import Guia, Item
 from database import engine, init_db
+from datetime import datetime
+from fastapi import HTTPException
 
 # Inicializar la base de datos
 init_db()
@@ -26,21 +28,31 @@ try:
 
     # Procesar datos e insertar en la base de datos
     with Session(engine) as session:
-        for _, r in df.iterrows():
-            gid = str(r['GD']).strip()
+        for _, row in df.iterrows():
+            # Validar fecha
+            try:
+                fecha = datetime.strptime(row["Fecha"], "%Y-%m-%d")  # Ajusta el formato según tu archivo
+            except ValueError:
+                raise HTTPException(status_code=400, detail=f"Fecha inválida: {row['Fecha']}")
+
+            # Validar cantidad
+            if not isinstance(row["Cantidad"], (int, float)):
+                raise HTTPException(status_code=400, detail=f"Cantidad inválida: {row['Cantidad']}")
+
+            gid = str(row['GD']).strip()
             guia = session.get(Guia, gid)
             if not guia:
                 guia = Guia(
                     id_guid=gid,
-                    fecha=str(r['Fecha']),
-                    proveedor=r.get('Proveedor', None)
+                    fecha=str(fecha),
+                    proveedor=row.get('Proveedor', None)
                 )
                 session.add(guia)
 
             item = Item(
-                tag=r['TAG'],
-                descripcion=r['Descripcion Material'],
-                cantidad=int(r['Cantidad']),
+                tag=row['TAG'],
+                descripcion=row['Descripcion Material'],
+                cantidad=int(row['Cantidad']),
                 id_guid=gid
             )
             session.add(item)
