@@ -62,6 +62,6 @@ def create_access_token(data: dict, expires_delta: timedelta) -> str:
 if __name__ == "__main__":
     # Código de prueba
     # En el controlador de inicio de sesión
-    print(f"[DEBUG] Usuario encontrado: {user.username}")
-    print(f"[DEBUG] Hash almacenado en la base de datos: {user.hashed_password}")
-    print(f"[DEBUG] Contraseña ingresada: {password}")
+    print(f"[DEBUG] Usuario encontrado: {user.username}") # type: ignore
+    print(f"[DEBUG] Hash almacenado en la base de datos: {user.hashed_password}") # type: ignore
+    print(f"[DEBUG] Contraseña ingresada: {password}") # type: ignore # type: ignore

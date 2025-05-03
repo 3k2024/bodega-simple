@@ -6,7 +6,7 @@ from fastapi import (
     FastAPI, Request, Depends, HTTPException, status,
     Form, Security, File, UploadFile, Cookie
 )
-from fastapi.responses import RedirectResponse, HTMLResponse, StreamingResponse
+from fastapi.responses import RedirectResponse, HTMLResponse, StreamingResponse, FileResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
@@ -158,14 +158,98 @@ def login_usuario(
 def home(request: Request):
     return templates.TemplateResponse("home.html", {"request": request})
 
-@app.get("/", response_class=HTMLResponse)
-def form_guia(request: Request, user: dict = Depends(get_current_user)):
-    hoy = datetime.today().date().isoformat()
-    esp = [e.value for e in EspecialidadEnum]
-    return templates.TemplateResponse(
-        "guia_form.html",
-        {"request": request, "hoy": hoy, "error": None, "especialidades": esp, "user": user["username"]}
-    )
+@app.get("/click_ingreso_guia", response_class=HTMLResponse)
+def mostrar_formulario_ingreso_guia(request: Request):
+    return templates.TemplateResponse("ingreso_guia.html", {"request": request})
+
+@app.post("/click_ingreso_guia")
+async def guardar_guia_manual(
+    id_guid: str = Form(...),
+    fecha: str = Form(...),
+    tag: str = Form(...),
+    descripcion: str = Form(...),
+    cantidad: int = Form(...),
+    proveedor: Optional[str] = Form(None),
+    observacion: Optional[str] = Form(None),
+    especialidad: Optional[str] = Form(None),
+    db: Session = Depends(get_session)
+):
+    try:
+        print(f"Datos recibidos: id_guid={id_guid}, fecha={fecha}, tag={tag}, descripcion={descripcion}, cantidad={cantidad}, proveedor={proveedor}, observacion={observacion}, especialidad={especialidad}")
+
+        # Validar y convertir el campo fecha
+        try:
+            fecha_obj = datetime.strptime(fecha, "%Y-%m-%d").date()  # Convertir a objeto date
+            print(f"Fecha convertida correctamente: {fecha_obj}")
+        except ValueError as e:
+            print(f"Error al convertir la fecha: {e}")
+            raise HTTPException(status_code=400, detail="Formato de fecha inválido. Use YYYY-MM-DD.")
+
+        # Crear o buscar la guía
+        guia = db.exec(select(Guia).where(Guia.id_guid == id_guid)).first()
+        if not guia:
+            print("Guía no encontrada, creando una nueva.")
+            guia = Guia(
+                id_guid=id_guid,
+                fecha=fecha_obj,  # Asegúrate de usar fecha_obj
+                proveedor=proveedor,
+                observacion=observacion
+            )
+            db.add(guia)
+
+        # Crear el ítem
+        print("Creando el ítem asociado.")
+        item = Item(
+            tag=tag,
+            descripcion=descripcion,
+            cantidad=cantidad,
+            id_guid=id_guid,
+            especialidad=especialidad
+        )
+        db.add(item)
+
+        db.commit()
+        print("Guía y ítem guardados correctamente.")
+        return {"message": "Guía guardada correctamente."}
+    except Exception as e:
+        print(f"Error al guardar la guía: {e}")
+        raise HTTPException(status_code=500, detail=f"Error al guardar la guía: {str(e)}")
+
+@app.get("/export-excel/")
+def exportar_guias_a_excel(db: Session = Depends(get_session)):
+    try:
+        # Obtener las guías y sus ítems
+        guias = db.exec(select(Guia)).all()
+        data = []
+        for guia in guias:
+            for item in guia.items:
+                data.append({
+                    "Número de Guía": guia.id_guid,
+                    "Fecha": guia.fecha,
+                    "Proveedor": guia.proveedor,
+                    "Observación": guia.observacion,
+                    "TAG": item.tag,
+                    "Descripción": item.descripcion,
+                    "Cantidad": item.cantidad,
+                    "Especialidad": item.especialidad
+                })
+
+        # Crear un DataFrame de pandas
+        df = pd.DataFrame(data)
+
+        # Guardar el archivo Excel
+        file_path = "guias_exportadas.xlsx"
+        df.to_excel(file_path, index=False)
+
+        # Retornar el archivo como respuesta
+        return FileResponse(file_path, media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", filename="guias_exportadas.xlsx")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error al exportar las guías: {str(e)}")
+
+@app.get("/manual-import", response_class=HTMLResponse)
+def mostrar_formulario_import(request: Request):
+    print("Renderizando manual_import.html")
+    return templates.TemplateResponse("manual_import.html", {"request": request})
 
 @app.post("/manual-import/")
 async def manual_import(file: UploadFile = File(...)):
@@ -198,10 +282,11 @@ async def manual_import(file: UploadFile = File(...)):
                 guia = session.get(Guia, gid)
                 if not guia:
                     guia = Guia(
-                        id_guid=gid,
-                        fecha=str(fecha),
-                        proveedor=row.get('Proveedor', None)
-                    )
+    id_guid=gid,
+    fecha=fecha.date(),  # ✅ convertir correctamente
+    proveedor=row.get('Proveedor', None)
+)
+
                     session.add(guia)
 
                 item = Item(
@@ -218,6 +303,66 @@ async def manual_import(file: UploadFile = File(...)):
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error al procesar el archivo: {str(e)}")
+
+@app.post("/manual-import")
+async def procesar_importacion_manual(
+    id_guid_data: str = Form(...),
+    tag_data: str = Form(...),
+    descripcion_data: str = Form(...),
+    cantidad_data: str = Form(...),
+    fecha_data: str = Form(...),
+    proveedor_data: str = Form(None),
+    observacion_data: str = Form(None),
+    db: Session = Depends(get_session)
+):
+    try:
+        # Dividir los datos por líneas
+        id_guids = id_guid_data.splitlines()
+        tags = tag_data.splitlines()
+        descripciones = descripcion_data.splitlines()
+        cantidades = cantidad_data.splitlines()
+        fechas = fecha_data.splitlines()
+        proveedores = proveedor_data.splitlines() if proveedor_data else [None] * len(id_guids)
+        observaciones = observacion_data.splitlines() if observacion_data else [None] * len(id_guids)
+
+        # Validar que todas las listas tengan la misma longitud
+        if not (len(id_guids) == len(tags) == len(descripciones) == len(cantidades) == len(fechas)):
+            raise HTTPException(status_code=400, detail="Las columnas no tienen la misma cantidad de filas.")
+
+        # Procesar cada registro
+        for i in range(len(id_guids)):
+            try:
+                # Convertir la fecha al formato correcto
+                fecha_obj = datetime.strptime(fechas[i].strip(), "%d/%m/%Y").date()
+            except ValueError:
+                raise HTTPException(status_code=400, detail=f"Formato de fecha inválido en la línea {i + 1}. Use DD/MM/YYYY.")
+
+            # Crear o buscar la guía
+            guia = db.exec(select(Guia).where(Guia.id_guid == id_guids[i].strip())).first()
+            if not guia:
+                guia = Guia(
+                    id_guid=id_guids[i].strip(),
+                    fecha=fecha_obj,
+                    proveedor=proveedores[i].strip() if proveedores[i] else None,
+                    observacion=observaciones[i].strip() if observaciones[i] else None
+                )
+                db.add(guia)
+
+            # Crear el ítem
+            item = Item(
+                tag=tags[i].strip(),
+                descripcion=descripciones[i].strip(),
+                cantidad=int(cantidades[i].strip()),
+                id_guid=id_guids[i].strip()
+            )
+            db.add(item)
+
+        db.commit()
+        return {"message": f"Importación completada: {len(id_guids)} registros procesados."}
+
+    except Exception as e:
+        print(f"Error al procesar la importación: {e}")
+        raise HTTPException(status_code=500, detail=f"Error al procesar la importación: {str(e)}")
 
 @app.post("/upload-excel")
 async def procesar_excel_asignado(
@@ -270,41 +415,6 @@ async def procesar_excel_asignado(
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error al procesar el archivo: {str(e)}")
-
-@app.get("/manual-import", response_class=HTMLResponse)
-def mostrar_formulario_import(request: Request):
-    print("Renderizando manual_import.html")
-    return templates.TemplateResponse("manual_import.html", {"request": request})
-
-@app.get("/click_ingreso_guia", response_class=HTMLResponse)
-def mostrar_formulario_ingreso_guia(request: Request):
-    return templates.TemplateResponse("ingreso_guia.html", {"request": request})
-
-@app.post("/click_ingreso_guia")
-async def guardar_guia_manual(
-    id_guid: str = Form(...),
-    fecha: str = Form(...),
-    tag: str = Form(...),
-    descripcion: str = Form(...),
-    cantidad: int = Form(...),
-    proveedor: Optional[str] = Form(None),
-    db: Session = Depends(get_session)
-):
-    try:
-        # Crear o buscar la guía
-        guia = db.exec(select(Guia).where(Guia.id_guid == id_guid)).first()
-        if not guia:
-            guia = Guia(id_guid=id_guid, fecha=fecha, proveedor=proveedor)
-            db.add(guia)
-
-        # Crear el ítem
-        item = Item(tag=tag, descripcion=descripcion, cantidad=cantidad, id_guid=id_guid)
-        db.add(item)
-
-        db.commit()
-        return {"message": "Guía guardada correctamente."}
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error al guardar la guía: {str(e)}")
 
 # --- Manejo de errores ---
 @app.exception_handler(StarletteHTTPException)

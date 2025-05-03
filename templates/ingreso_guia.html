@@ -2,24 +2,47 @@
 {% block content %}
 <h3>Ingreso Manual de Guías</h3>
 <form action="/click_ingreso_guia" method="post">
-  <label for="id_guid">Número de Guía:</label>
-  <input type="text" id="id_guid" name="id_guid" required><br>
+    <label for="id_guid">Número de Guía:</label>
+    <input type="text" id="id_guid" name="id_guid" required>
 
-  <label for="fecha">Fecha:</label>
-  <input type="date" id="fecha" name="fecha" required><br>
+    <label for="fecha">Fecha (formato YYYY-MM-DD):</label>
+    <input type="text" id="fecha" name="fecha" placeholder="YYYY-MM-DD" required pattern="\d{4}-\d{2}-\d{2}" title="Ingrese la fecha en el formato YYYY-MM-DD">
 
-  <label for="tag">TAG:</label>
-  <input type="text" id="tag" name="tag" required><br>
+    <label for="tag">TAG:</label>
+    <input type="text" id="tag" name="tag" required>
 
-  <label for="descripcion">Descripción:</label>
-  <input type="text" id="descripcion" name="descripcion" required><br>
+    <label for="descripcion">Descripción:</label>
+    <input type="text" id="descripcion" name="descripcion" required>
 
-  <label for="cantidad">Cantidad:</label>
-  <input type="number" id="cantidad" name="cantidad" required><br>
+    <label for="cantidad">Cantidad:</label>
+    <input type="number" id="cantidad" name="cantidad" required>
 
-  <label for="proveedor">Proveedor:</label>
-  <input type="text" id="proveedor" name="proveedor"><br>
+    <label for="proveedor">Proveedor:</label>
+    <input type="text" id="proveedor" name="proveedor">
 
-  <button type="submit">Guardar Guía</button>
+    <label for="observacion">Observación:</label>
+    <input type="text" id="observacion" name="observacion">
+
+    <label for="especialidad">Especialidad:</label>
+    <select id="especialidad" name="especialidad">
+        <option value="">Seleccione una especialidad</option>
+        <option value="Estructura">Estructura</option>
+        <option value="Eléctrico">Eléctrico</option>
+        <option value="Civil">Civil</option>
+        <option value="Fierro">Fierro</option>
+        <option value="Válvulas">Válvulas</option>
+        <option value="Instrumentación">Instrumentación</option>
+        <option value="Mecánica Equipos">Mecánica Equipos</option>
+        <option value="Eléctricos Equipos">Eléctricos Equipos</option>
+        <option value="Cañerías">Cañerías</option>
+    </select>
+
+    <button type="submit">Guardar</button>
 </form>
+
+<style>
+    input[type="text"]::-webkit-calendar-picker-indicator {
+        display: none;
+    }
+</style>
 {% endblock %}
