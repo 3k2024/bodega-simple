@@ -1,5 +1,5 @@
 from sqlmodel import Session, select
-from database import engine
+from db_config import engine
 from models import User
 from auth import get_password_hash  # Importa la función para generar hashes
 

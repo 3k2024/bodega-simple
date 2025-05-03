@@ -16,18 +16,23 @@ class EspecialidadEnum(str, PyEnum):
 
 class Guia(SQLModel, table=True):
     id_guid: str = Field(primary_key=True)
-    fecha: date  # Asegúrate de que sea de tipo date
+    fecha: date
     proveedor: Optional[str] = None
     observacion: Optional[str] = None
+
+    # Relación con el modelo Item
+    items: List["Item"] = Relationship(back_populates="guia")
 
 class Item(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
     tag: str
     descripcion: str
     cantidad: int
-    especialidad: Optional[EspecialidadEnum] = Field(default=None, nullable=True)
+    especialidad: Optional[str] = None
     id_guid: str = Field(foreign_key="guia.id_guid")
-    guia: Optional[Guia] = Relationship(back_populates="items")  # Relación con la guía
+
+    # Relación inversa con el modelo Guia
+    guia: Optional[Guia] = Relationship(back_populates="items")
 
 class User(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)

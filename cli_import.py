@@ -2,7 +2,7 @@ import sys
 import pandas as pd
 from sqlmodel import Session
 from models import Guia, Item
-from database import engine, init_db
+from db_config import engine, init_db
 from datetime import datetime
 from fastapi import HTTPException
 
