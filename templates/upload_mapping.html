@@ -9,7 +9,7 @@
                "descripcion:Descripción","cantidad:Cantidad"] %}
   {% set field, label = f.split(':') %}
   <label for="col_{{ field }}">{{ label }}:
-    <select id="col_{{ field }}" name="col_{{ field }}" required aria-required="true" aria-label="Seleccionar columna para {{ label }}">
+    <select id="col_{{ field }}" name="col_{{ field }}" required>
       <option value="">-- selecciona columna --</option>
       {% for c in columns %}
       <option value="{{ c }}">{{ c }}</option>
@@ -19,19 +19,19 @@
   {% endfor %}
 
   <label for="col_proveedor">Proveedor (opcional):
-    <select id="col_proveedor" name="col_proveedor" aria-label="Seleccionar columna para Proveedor">
+    <select id="col_proveedor" name="col_proveedor">
       <option value="">(ninguno)</option>
       {% for c in columns %}<option>{{ c }}</option>{% endfor %}
     </select>
   </label>
 
   <label for="col_observacion">Observación (opcional):
-    <select id="col_observacion" name="col_observacion" aria-label="Seleccionar columna para Observación">
+    <select id="col_observacion" name="col_observacion">
       <option value="">(ninguno)</option>
       {% for c in columns %}<option>{{ c }}</option>{% endfor %}
     </select>
   </label>
 
-  <button type="submit" class="button-primary" aria-label="Importar datos del archivo Excel">Importar todo</button>
+  <button type="submit" class="button-primary">Importar todo</button>
 </form>
 {% endblock %}

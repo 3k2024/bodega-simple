@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% block content %}
+<h3>Ingreso Manual de Guías</h3>
+<form action="/click_ingreso_guia" method="post">
+  <label for="id_guid">Número de Guía:</label>
+  <input type="text" id="id_guid" name="id_guid" required><br>
+
+  <label for="fecha">Fecha:</label>
+  <input type="date" id="fecha" name="fecha" required><br>
+
+  <label for="tag">TAG:</label>
+  <input type="text" id="tag" name="tag" required><br>
+
+  <label for="descripcion">Descripción:</label>
+  <input type="text" id="descripcion" name="descripcion" required><br>
+
+  <label for="cantidad">Cantidad:</label>
+  <input type="number" id="cantidad" name="cantidad" required><br>
+
+  <label for="proveedor">Proveedor:</label>
+  <input type="text" id="proveedor" name="proveedor"><br>
+
+  <button type="submit">Guardar Guía</button>
+</form>
+{% endblock %}
