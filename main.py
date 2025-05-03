@@ -219,9 +219,92 @@ async def manual_import(file: UploadFile = File(...)):
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error al procesar el archivo: {str(e)}")
 
+@app.post("/upload-excel")
+async def procesar_excel_asignado(
+    file: str = Form(...),
+    col_id_guid: str = Form(...),
+    col_fecha: str = Form(...),
+    col_tag: str = Form(...),
+    col_descripcion: str = Form(...),
+    col_cantidad: str = Form(...),
+    col_proveedor: Optional[str] = Form(None),
+    col_observacion: Optional[str] = Form(None),
+    db: Session = Depends(get_session)
+):
+    try:
+        # Leer el archivo Excel desde la ruta proporcionada
+        df = pd.read_excel(file)
+
+        # Procesar los datos según las columnas asignadas
+        for _, row in df.iterrows():
+            gid = row[col_id_guid]
+            fecha = datetime.strptime(row[col_fecha], "%Y-%m-%d")
+            tag = row[col_tag]
+            descripcion = row[col_descripcion]
+            cantidad = int(row[col_cantidad])
+            proveedor = row[col_proveedor] if col_proveedor else None
+            observacion = row[col_observacion] if col_observacion else None
+
+            # Crear o buscar la guía
+            guia = db.exec(select(Guia).where(Guia.id_guid == gid)).first()
+            if not guia:
+                guia = Guia(
+                    id_guid=gid,
+                    fecha=fecha,
+                    proveedor=proveedor
+                )
+                db.add(guia)
+
+            # Crear el ítem
+            item = Item(
+                tag=tag,
+                descripcion=descripcion,
+                cantidad=cantidad,
+                id_guid=gid,
+                observacion=observacion
+            )
+            db.add(item)
+
+        db.commit()
+        return {"message": "Datos importados correctamente."}
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error al procesar el archivo: {str(e)}")
+
 @app.get("/manual-import", response_class=HTMLResponse)
 def mostrar_formulario_import(request: Request):
+    print("Renderizando manual_import.html")
     return templates.TemplateResponse("manual_import.html", {"request": request})
+
+@app.get("/click_ingreso_guia", response_class=HTMLResponse)
+def mostrar_formulario_ingreso_guia(request: Request):
+    return templates.TemplateResponse("ingreso_guia.html", {"request": request})
+
+@app.post("/click_ingreso_guia")
+async def guardar_guia_manual(
+    id_guid: str = Form(...),
+    fecha: str = Form(...),
+    tag: str = Form(...),
+    descripcion: str = Form(...),
+    cantidad: int = Form(...),
+    proveedor: Optional[str] = Form(None),
+    db: Session = Depends(get_session)
+):
+    try:
+        # Crear o buscar la guía
+        guia = db.exec(select(Guia).where(Guia.id_guid == id_guid)).first()
+        if not guia:
+            guia = Guia(id_guid=id_guid, fecha=fecha, proveedor=proveedor)
+            db.add(guia)
+
+        # Crear el ítem
+        item = Item(tag=tag, descripcion=descripcion, cantidad=cantidad, id_guid=id_guid)
+        db.add(item)
+
+        db.commit()
+        return {"message": "Guía guardada correctamente."}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error al guardar la guía: {str(e)}")
 
 # --- Manejo de errores ---
 @app.exception_handler(StarletteHTTPException)
