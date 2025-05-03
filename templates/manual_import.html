@@ -35,6 +35,15 @@
   <button type="submit" class="button-primary">Importar registros</button>
 </form>
 
+<h1>Importar Archivo Excel</h1>
+<form action="/manual-import/" method="post" enctype="multipart/form-data">
+  <label for="file">Selecciona un archivo Excel:</label>
+  <input type="file" id="file" name="file" accept=".xlsx" required>
+  <button type="submit">Subir</button>
+</form>
+
+<a href="/manual-import">Ingreso Manual Masivo</a>
+
 {% if error %}
 <p style="color:red">{{ error }}</p>
 {% endif %}
