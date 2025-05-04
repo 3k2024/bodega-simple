@@ -376,3 +376,46 @@ async def ver_pdf(id_guid: str):
     except Exception as e:
         logger.error(f"Error al visualizar el archivo PDF: {e}")
         raise HTTPException(status_code=500, detail=f"Error al visualizar el archivo PDF: {str(e)}")    
+    
+
+#---------Revisar Guias----------------
+
+@app.get("/revisar-guia", response_class=HTMLResponse)
+def formulario_revisar_guia(request: Request):
+    """Muestra el formulario para buscar el detalle de una guía."""
+    return templates.TemplateResponse("revisar_guia.html", {"request": request})
+
+
+@app.get("/detalle-guia", response_class=JSONResponse)
+async def detalle_guia(id_guid: str, db: Session = Depends(get_session)):
+    """Devuelve el detalle de una guía por su número."""
+    try:
+        # Buscar la guía en la base de datos
+        guia = db.exec(select(Guia).where(Guia.id_guid == id_guid)).first()
+        if not guia:
+            raise HTTPException(status_code=404, detail="Guía no encontrada.")
+
+        # Obtener los ítems asociados a la guía
+        items = db.exec(select(Item).where(Item.id_guid == id_guid)).all()
+
+        # Construir la respuesta
+        detalle = {
+            "Número de Guía": guia.id_guid,
+            "Fecha": guia.fecha,
+            "Proveedor": guia.proveedor,
+            "Observación": guia.observacion,
+            "Ítems": [
+                {
+                    "TAG": item.tag,
+                    "Descripción": item.descripcion,
+                    "Cantidad": item.cantidad,
+                    "Especialidad": item.especialidad,
+                }
+                for item in items
+            ],
+        }
+
+        return detalle
+    except Exception as e:
+        logger.error(f"Error al obtener el detalle de la guía: {e}")
+        raise HTTPException(status_code=500, detail=f"Error al obtener el detalle de la guía: {str(e)}")
