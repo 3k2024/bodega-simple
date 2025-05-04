@@ -10,6 +10,9 @@ from sqlmodel import Session, select
 from db_config import init_db, get_session
 from models import Guia, Item
 import pandas as pd
+from dateutil.parser import parse  # Importar el analizador de fechas
+
+
 
 # Configuración de logging
 logging.basicConfig(level=logging.DEBUG)
@@ -222,7 +225,8 @@ async def procesar_excel(file: UploadFile = File(...), db: Session = Depends(get
         return {"message": "Archivo procesado y datos guardados correctamente."}
     except Exception as e:
         logger.error(f"Error al procesar el archivo Excel: {e}")
-        raise HTTPException(status_code=500, detail=f"Error al procesar el archivo: {str(e)}")from dateutil.parser import parse  # Importar el analizador de fechas
+        raise HTTPException(status_code=500, detail=f"Error al procesar el archivo: {str(e)}")
+    
 
 @app.post("/procesar-excel")
 async def procesar_excel(file: UploadFile = File(...), db: Session = Depends(get_session)):
