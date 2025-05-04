@@ -311,3 +311,23 @@ async def procesar_excel(file: UploadFile = File(...), db: Session = Depends(get
     except Exception as e:
         logger.error(f"Error al procesar el archivo Excel: {e}")
         raise HTTPException(status_code=500, detail=f"Error al procesar el archivo: {str(e)}")
+
+        #-------vaciar base de datos----------------
+
+
+
+        @app.get("/vaciar-bd", response_class=HTMLResponse)
+async def vaciar_base_datos(db: Session = Depends(get_session)):
+    """Elimina todos los registros de las tablas Guia e Item."""
+    try:
+        # Eliminar todos los registros de las tablas
+        db.exec("DELETE FROM item;")
+        db.exec("DELETE FROM guia;")
+        db.commit()
+        logger.info("Base de datos vaciada correctamente.")
+        return {"message": "Base de datos vaciada correctamente."}
+    except Exception as e:
+        logger.error(f"Error al vaciar la base de datos: {e}")
+        raise HTTPException(status_code=500, detail=f"Error al vaciar la base de datos: {str(e)}")
+
+        

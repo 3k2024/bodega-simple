@@ -4,31 +4,28 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Bodega Internacional CONPAX INCOLUR</title>
-    <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
         body {
-            background-color: #343a40; /* Fondo oscuro */
-            color: #ffffff; /* Texto claro */
+            background-color: #343a40;
+            color: #ffffff;
         }
         .list-group-item {
-            background-color: #495057; /* Fondo de los botones */
+            background-color: #495057;
             border: none;
         }
         .list-group-item a {
-            color: #ffffff; /* Texto de los enlaces */
+            color: #ffffff;
         }
         .list-group-item a:hover {
-            color: #343a40; /* Texto al pasar el mouse */
-            background-color: #ffffff; /* Fondo al pasar el mouse */
+            color: #343a40;
+            background-color: #ffffff;
         }
     </style>
 </head>
 <body class="container mt-5">
     <h1 class="text-center">Bodega Internacional CONPAX INCOLUR</h1>
     <p class="text-center">Bienvenido, selecciona una opción del menú:</p>
-
-    <!-- Menú principal -->
     <div class="d-flex justify-content-center">
         <ul class="list-group w-50">
             <li class="list-group-item">
@@ -39,6 +36,9 @@
             </li>
             <li class="list-group-item">
                 <a href="/importar-excel" class="btn btn-warning w-100">Importar Guías desde Excel</a>
+            </li>
+            <li class="list-group-item">
+                <a href="/vaciar-bd" class="btn btn-danger w-100">Vaciar Base de Datos</a>
             </li>
         </ul>
     </div>
