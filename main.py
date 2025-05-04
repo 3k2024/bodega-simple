@@ -380,16 +380,13 @@ async def ver_pdf(id_guid: str):
 
 #---------Revisar Guias----------------
 
-@app.get("/revisar-guia", response_class=HTMLResponse)
-def formulario_revisar_guia(request: Request):
-    """Muestra el formulario para buscar el detalle de una guía."""
-    return templates.TemplateResponse("revisar_guia.html", {"request": request})
-
-
 @app.get("/detalle-guia", response_class=JSONResponse)
 async def detalle_guia(id_guid: str, db: Session = Depends(get_session)):
     """Devuelve el detalle de una guía por su número."""
     try:
+        # Limpiar el número de guía (eliminar espacios adicionales)
+        id_guid = id_guid.strip()
+
         # Validar que el número de guía sea numérico
         if not id_guid.isdigit():
             raise HTTPException(status_code=400, detail="El número de guía debe contener solo números.")
