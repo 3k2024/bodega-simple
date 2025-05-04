@@ -318,9 +318,9 @@ async def procesar_excel(file: UploadFile = File(...), db: Session = Depends(get
 async def vaciar_base_datos(db: Session = Depends(get_session)):
     """Elimina todos los registros de las tablas Guia e Item."""
     try:
-        # Eliminar todos los registros de las tablas
-        db.exec("DELETE FROM item;")
-        db.exec("DELETE FROM guia;")
+        # Eliminar todos los registros de las tablas usando consultas SQL sin procesar
+        db.exec(text("DELETE FROM item;"))
+        db.exec(text("DELETE FROM guia;"))
         db.commit()
         logger.info("Base de datos vaciada correctamente.")
         return {"message": "Base de datos vaciada correctamente."}
