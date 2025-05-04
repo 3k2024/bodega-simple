@@ -399,24 +399,32 @@ async def detalle_guia(id_guid: str, db: Session = Depends(get_session)):
         # Obtener los ítems asociados a la guía
         items = db.exec(select(Item).where(Item.id_guid == id_guid)).all()
 
+        # Verificar si hay ítems asociados
+        if not items:
+            logger.warning(f"No se encontraron ítems asociados para la guía {id_guid}.")
+
         # Construir la respuesta
         detalle = {
             "Número de Guía": guia.id_guid,
             "Fecha": guia.fecha,
             "Proveedor": guia.proveedor,
-            "Observación": guia.observacion,
+            "Observación": guia.observacion if guia.observacion else "Sin observación",
             "Ítems": [
                 {
                     "TAG": item.tag,
                     "Descripción": item.descripcion,
                     "Cantidad": item.cantidad,
-                    "Especialidad": item.especialidad,
+                    "Especialidad": item.especialidad if item.especialidad else "No especificada",
                 }
                 for item in items
             ],
         }
 
+        logger.info(f"Detalle de la guía {id_guid} obtenido correctamente.")
         return detalle
+    except HTTPException as http_exc:
+        logger.error(f"HTTP error al obtener el detalle de la guía: {http_exc.detail}")
+        raise http_exc
     except Exception as e:
-        logger.error(f"Error al obtener el detalle de la guía: {e}")
-        raise HTTPException(status_code=500, detail=f"Error al obtener el detalle de la guía: {str(e)}")
+        logger.error(f"Error inesperado al obtener el detalle de la guía: {e}")
+        raise HTTPException(status_code=500, detail=f"Error inesperado al obtener el detalle de la guía: {str(e)}")
