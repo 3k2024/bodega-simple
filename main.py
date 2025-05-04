@@ -11,6 +11,7 @@ from db_config import init_db, get_session
 from models import Guia, Item
 import pandas as pd
 from dateutil.parser import parse  # Importar el analizador de fechas
+from sqlalchemy import text  # Importar text para consultas SQL sin procesar
 
 
 
