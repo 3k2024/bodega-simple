@@ -129,20 +129,28 @@ def exportar_guias_a_excel(
         raise HTTPException(status_code=500, detail=f"Error al exportar las guías: {str(e)}")
 
 #----------------------exprotar a excel FIN----------------
+@app.get("/importar-excel", response_class=HTMLResponse)
+def formulario_importar_excel(request: Request):
+    """Muestra el formulario para importar guías desde un archivo Excel."""
+    return templates.TemplateResponse("importar_excel.html", {"request": request})
 
-@app.post("/manual-import/")
-async def manual_import(file: UploadFile = File(...), db: Session = Depends(get_session)):
-    """Importa guías e ítems desde un archivo Excel."""
+
+@app.post("/procesar-excel")
+async def procesar_excel(file: UploadFile = File(...), db: Session = Depends(get_session)):
+    """Procesa un archivo Excel y guarda los datos en la base de datos."""
     try:
-        if file.filename.endswith(".xlsx"):
-            df = pd.read_excel(file.file)
-        else:
+        if not file.filename.endswith(".xlsx"):
             raise HTTPException(status_code=400, detail="El archivo debe ser un Excel (.xlsx)")
 
+        # Leer el archivo Excel
+        df = pd.read_excel(file.file)
+
+        # Validar las columnas requeridas
         columnas_requeridas = {'GD', 'Fecha', 'Proveedor', 'TAG', 'Descripcion Material', 'Cantidad'}
         if not columnas_requeridas.issubset(df.columns):
             raise HTTPException(status_code=400, detail=f"Faltan columnas requeridas: {', '.join(columnas_requeridas)}")
 
+        # Procesar cada fila del archivo
         for _, row in df.iterrows():
             fecha = datetime.strptime(row["Fecha"], "%Y-%m-%d").date()
             gid = str(row['GD']).strip()
@@ -164,13 +172,7 @@ async def manual_import(file: UploadFile = File(...), db: Session = Depends(get_
             db.add(item)
 
         db.commit()
-        logger.info(f"Importación completada: {len(df)} registros procesados.")
-        return {"message": f"Importación completada: {len(df)} registros procesados."}
+        return {"message": "Archivo procesado y datos guardados correctamente."}
     except Exception as e:
-        logger.error(f"Error al procesar el archivo: {e}")
+        logger.error(f"Error al procesar el archivo Excel: {e}")
         raise HTTPException(status_code=500, detail=f"Error al procesar el archivo: {str(e)}")
-
-if __name__ == "__main__":
-    port = int(os.getenv("PORT", 8000))
-    import uvicorn
-    uvicorn.run("main:app", host="0.0.0.0", port=port)
