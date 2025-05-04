@@ -78,14 +78,30 @@ async def guardar_guia_manual(
         logger.error(f"Error al guardar la guía: {e}")
         raise HTTPException(status_code=500, detail=f"Error al guardar la guía: {str(e)}")
 
+
+
+#------------link exportar a excel----------------
+
 @app.get("/export-excel/")
-def exportar_guias_a_excel(db: Session = Depends(get_session)):
-    """Exporta las guías e ítems a un archivo Excel."""
+def exportar_guias_a_excel(
+    proveedor: Optional[str] = None,
+    especialidad: Optional[str] = None,
+    db: Session = Depends(get_session)
+):
+    """Exporta las guías e ítems a un archivo Excel con filtros opcionales."""
     try:
-        guias = db.exec(select(Guia)).all()
+        # Consulta base para obtener las guías
+        query = select(Guia)
+        if proveedor:
+            query = query.where(Guia.proveedor == proveedor)
+        guias = db.exec(query).all()
+
+        # Filtrar ítems por especialidad si se proporciona
         data = []
         for guia in guias:
             for item in guia.items:
+                if especialidad and item.especialidad != especialidad:
+                    continue
                 data.append({
                     "Número de Guía": guia.id_guid,
                     "Fecha": guia.fecha,
@@ -97,6 +113,7 @@ def exportar_guias_a_excel(db: Session = Depends(get_session)):
                     "Especialidad": item.especialidad
                 })
 
+        # Generar el archivo Excel
         file_path = "guias_exportadas.xlsx"
         df = pd.DataFrame(data)
         df.to_excel(file_path, index=False)
@@ -104,6 +121,8 @@ def exportar_guias_a_excel(db: Session = Depends(get_session)):
     except Exception as e:
         logger.error(f"Error al exportar las guías: {e}")
         raise HTTPException(status_code=500, detail=f"Error al exportar las guías: {str(e)}")
+
+#----------------------exprotar a excel FIN----------------
 
 @app.post("/manual-import/")
 async def manual_import(file: UploadFile = File(...), db: Session = Depends(get_session)):
