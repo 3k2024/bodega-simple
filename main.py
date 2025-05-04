@@ -28,10 +28,12 @@ templates = Jinja2Templates(directory="templates")
 
 @app.get("/", response_class=HTMLResponse)
 def home(request: Request):
+    """Página de inicio."""
     return templates.TemplateResponse("home.html", {"request": request})
 
 @app.get("/click_ingreso_guia", response_class=HTMLResponse)
 def mostrar_formulario_ingreso_guia(request: Request):
+    """Muestra el formulario para ingresar guías manualmente."""
     return templates.TemplateResponse("ingreso_guia.html", {"request": request})
 
 @app.post("/click_ingreso_guia")
@@ -46,6 +48,7 @@ async def guardar_guia_manual(
     especialidad: Optional[str] = Form(None),
     db: Session = Depends(get_session)
 ):
+    """Guarda una guía manualmente junto con sus ítems."""
     try:
         logger.debug(f"Datos recibidos: id_guid={id_guid}, fecha={fecha}, tag={tag}, descripcion={descripcion}, cantidad={cantidad}")
         fecha_obj = datetime.strptime(fecha, "%Y-%m-%d").date()
@@ -77,6 +80,7 @@ async def guardar_guia_manual(
 
 @app.get("/export-excel/")
 def exportar_guias_a_excel(db: Session = Depends(get_session)):
+    """Exporta las guías e ítems a un archivo Excel."""
     try:
         guias = db.exec(select(Guia)).all()
         data = []
@@ -103,6 +107,7 @@ def exportar_guias_a_excel(db: Session = Depends(get_session)):
 
 @app.post("/manual-import/")
 async def manual_import(file: UploadFile = File(...), db: Session = Depends(get_session)):
+    """Importa guías e ítems desde un archivo Excel."""
     try:
         if file.filename.endswith(".xlsx"):
             df = pd.read_excel(file.file)
