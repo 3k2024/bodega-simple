@@ -12,6 +12,8 @@ from models import Guia, Item
 import pandas as pd
 from dateutil.parser import parse  # Importar el analizador de fechas
 from sqlalchemy import text  # Importar text para consultas SQL sin procesar
+from fastapi.responses import JSONResponse  # Importar JSONResponse
+
 
 
 
@@ -314,7 +316,7 @@ async def procesar_excel(file: UploadFile = File(...), db: Session = Depends(get
         raise HTTPException(status_code=500, detail=f"Error al procesar el archivo: {str(e)}")
 
         #-------vaciar base de datos----------------
-@app.get("/vaciar-bd", response_class=HTMLResponse)
+@app.get("/vaciar-bd", response_class=JSONResponse)
 async def vaciar_base_datos(db: Session = Depends(get_session)):
     """Elimina todos los registros de las tablas Guia e Item."""
     try:
