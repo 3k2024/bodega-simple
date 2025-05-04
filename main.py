@@ -148,19 +148,98 @@ async def procesar_excel(file: UploadFile = File(...), db: Session = Depends(get
         # Leer el archivo Excel
         df = pd.read_excel(file.file)
 
-        # Cabeceras requeridas
-        columnas_requeridas = {'GD', 'Fecha', 'Proveedor', 'TAG', 'Descripcion Material', 'Cantidad'}
+        # Cabeceras requeridas y sus equivalentes
+        columnas_requeridas = {
+            "GD": ["GD", "Guía", "Guia"],
+            "Fecha": ["Fecha", "Date"],
+            "Proveedor": ["Proveedor", "Supplier"],
+            "TAG": ["TAG", "Etiqueta"],
+            "Descripcion Material": ["Descripcion Material", "Descripción Material", "Material"],
+            "Cantidad": ["Cantidad", "Quantity"]
+        }
 
-        # Verificar si las cabeceras requeridas están presentes
-        columnas_presentes = set(df.columns)
-        if not columnas_requeridas.issubset(columnas_presentes):
+        # Mapear las columnas del archivo a las requeridas
+        columnas_mapeadas = {}
+        for columna_requerida, equivalentes in columnas_requeridas.items():
+            for equivalente in equivalentes:
+                if equivalente in df.columns:
+                    columnas_mapeadas[columna_requerida] = equivalente
+                    break
+
+        # Verificar si faltan columnas requeridas
+        columnas_faltantes = [col for col in columnas_requeridas if col not in columnas_mapeadas]
+        if columnas_faltantes:
             raise HTTPException(
                 status_code=400,
-                detail=f"Faltan columnas requeridas: {', '.join(columnas_requeridas - columnas_presentes)}"
+                detail=f"Faltan columnas requeridas: {', '.join(columnas_faltantes)}"
             )
 
-        # Reordenar las columnas según las cabeceras requeridas
-        df = df[list(columnas_requeridas)]
+        # Renombrar las columnas del DataFrame según las requeridas
+        df = df.rename(columns=columnas_mapeadas)
+
+        # Procesar cada fila del archivo
+        for _, row in df.iterrows():
+            fecha = datetime.strptime(row["Fecha"], "%Y-%m-%d").date()
+            gid = str(row['GD']).strip()
+            guia = db.exec(select(Guia).where(Guia.id_guid == gid)).first()
+            if not guia:
+                guia = Guia(
+                    id_guid=gid,
+                    fecha=fecha,
+                    proveedor=row.get('Proveedor', None)
+                )
+                db.add(guia)
+
+            item = Item(
+                tag=row['TAG'],
+                descripcion=row['Descripcion Material'],
+                cantidad=int(row['Cantidad']),
+                id_guid=gid
+            )
+            db.add(item)
+
+        db.commit()
+        return {"message": "Archivo procesado y datos guardados correctamente."}
+    except Exception as e:
+        logger.error(f"Error al procesar el archivo Excel: {e}")
+        raise HTTPException(status_code=500, detail=f"Error al procesar el archivo: {str(e)}")@app.post("/procesar-excel")
+async def procesar_excel(file: UploadFile = File(...), db: Session = Depends(get_session)):
+    """Procesa un archivo Excel y guarda los datos en la base de datos."""
+    try:
+        if not file.filename.endswith(".xlsx"):
+            raise HTTPException(status_code=400, detail="El archivo debe ser un Excel (.xlsx)")
+
+        # Leer el archivo Excel
+        df = pd.read_excel(file.file)
+
+        # Cabeceras requeridas y sus equivalentes
+        columnas_requeridas = {
+            "GD": ["GD", "Guía", "Guia"],
+            "Fecha": ["Fecha", "Date"],
+            "Proveedor": ["Proveedor", "Supplier"],
+            "TAG": ["TAG", "Etiqueta"],
+            "Descripcion Material": ["Descripcion Material", "Descripción Material", "Material"],
+            "Cantidad": ["Cantidad", "Quantity"]
+        }
+
+        # Mapear las columnas del archivo a las requeridas
+        columnas_mapeadas = {}
+        for columna_requerida, equivalentes in columnas_requeridas.items():
+            for equivalente in equivalentes:
+                if equivalente in df.columns:
+                    columnas_mapeadas[columna_requerida] = equivalente
+                    break
+
+        # Verificar si faltan columnas requeridas
+        columnas_faltantes = [col for col in columnas_requeridas if col not in columnas_mapeadas]
+        if columnas_faltantes:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Faltan columnas requeridas: {', '.join(columnas_faltantes)}"
+            )
+
+        # Renombrar las columnas del DataFrame según las requeridas
+        df = df.rename(columns=columnas_mapeadas)
 
         # Procesar cada fila del archivo
         for _, row in df.iterrows():
