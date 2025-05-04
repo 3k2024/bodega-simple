@@ -390,6 +390,10 @@ def formulario_revisar_guia(request: Request):
 async def detalle_guia(id_guid: str, db: Session = Depends(get_session)):
     """Devuelve el detalle de una guía por su número."""
     try:
+        # Validar que el número de guía sea numérico
+        if not id_guid.isdigit():
+            raise HTTPException(status_code=400, detail="El número de guía debe contener solo números.")
+
         # Buscar la guía en la base de datos
         guia = db.exec(select(Guia).where(Guia.id_guid == id_guid)).first()
         if not guia:
