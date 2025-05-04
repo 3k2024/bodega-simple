@@ -156,7 +156,6 @@ async def procesar_excel(file: UploadFile = File(...), db: Session = Depends(get
             "TAG": ["TAG", "Etiqueta"],
             "Descripcion Material": ["Descripcion Material", "Descripción Material", "Material"],
             "Cantidad": ["Cantidad", "Quantity", "Q"]
-            
         }
 
         # Mapear las columnas del archivo a las requeridas
@@ -187,6 +186,9 @@ async def procesar_excel(file: UploadFile = File(...), db: Session = Depends(get
             "Descripcion Material": "SIN_DESCRIPCION",
             "Cantidad": 0  # Cantidad por defecto para celdas vacías
         })
+
+        # Convertir la columna Fecha a cadenas
+        df["Fecha"] = df["Fecha"].astype(str)
 
         # Procesar cada fila del archivo
         for _, row in df.iterrows():
@@ -219,4 +221,3 @@ async def procesar_excel(file: UploadFile = File(...), db: Session = Depends(get
     except Exception as e:
         logger.error(f"Error al procesar el archivo Excel: {e}")
         raise HTTPException(status_code=500, detail=f"Error al procesar el archivo: {str(e)}")
-    
