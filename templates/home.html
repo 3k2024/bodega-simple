@@ -3,21 +3,16 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bodega Internacional</title>
+    <title>Bodega Internacional CONPAX INCOLUR</title>
 </head>
 <body>
-    <h1>Bienvenido a Bodega Internacional</h1>
-    <p>Utiliza las opciones a continuación:</p>
+    <h1>Bodega Internacional CONPAX INCOLUR</h1>
+    <p>Bienvenido, selecciona una opción del menú:</p>
 
-    <!-- Formulario para exportar Excel con filtros -->
-    <form method="GET" action="/export-excel/">
-        <label for="proveedor">Exportar por Proveedor:</label>
-        <input type="text" id="proveedor" name="proveedor" placeholder="Ingrese el proveedor">
-        <br><br>
-        <label for="especialidad">Exportar por Especialidad:</label>
-        <input type="text" id="especialidad" name="especialidad" placeholder="Ingrese la especialidad">
-        <br><br>
-        <button type="submit" class="btn btn-primary">Exportar Guías a Excel</button>
-    </form>
+    <!-- Menú principal -->
+    <ul>
+        <li><a href="/click_ingreso_guia">Ingresar Guías</a></li>
+        <li><a href="/export-excel/">Exportar Guías a Excel</a></li>
+    </ul>
 </body>
 </html>
