@@ -13,6 +13,8 @@ import pandas as pd
 from dateutil.parser import parse  # Importar el analizador de fechas
 from sqlalchemy import text  # Importar text para consultas SQL sin procesar
 from fastapi.responses import JSONResponse  # Importar JSONResponse
+import shutil  # Para mover archivos
+
 
 
 
@@ -329,3 +331,48 @@ async def vaciar_base_datos(db: Session = Depends(get_session)):
     except Exception as e:
         logger.error(f"Error al vaciar la base de datos: {e}")
         raise HTTPException(status_code=500, detail=f"Error al vaciar la base de datos: {str(e)}")
+    
+    #------------adjuntar pdf----------------
+
+@app.get("/adjuntar-pdf", response_class=HTMLResponse)
+def formulario_adjuntar_pdf(request: Request):
+    """Muestra el formulario para adjuntar y visualizar guías en PDF."""
+    return templates.TemplateResponse("adjuntar_pdf.html", {"request": request})
+
+
+@app.post("/subir-pdf")
+async def subir_pdf(id_guid: str = Form(...), file: UploadFile = File(...)):
+    """Sube un archivo PDF asociado a un número de guía."""
+    try:
+        if not file.filename.endswith(".pdf"):
+            raise HTTPException(status_code=400, detail="El archivo debe ser un PDF.")
+
+        # Crear el directorio si no existe
+        pdf_dir = "static/pdf"
+        os.makedirs(pdf_dir, exist_ok=True)
+
+        # Guardar el archivo PDF
+        file_path = os.path.join(pdf_dir, f"{id_guid}.pdf")
+        with open(file_path, "wb") as buffer:
+            shutil.copyfileobj(file.file, buffer)
+
+        logger.info(f"Archivo PDF guardado correctamente: {file_path}")
+        return {"message": f"Archivo PDF para la guía {id_guid} subido correctamente."}
+    except Exception as e:
+        logger.error(f"Error al subir el archivo PDF: {e}")
+        raise HTTPException(status_code=500, detail=f"Error al subir el archivo PDF: {str(e)}")
+
+
+@app.get("/ver-pdf")
+async def ver_pdf(id_guid: str):
+    """Devuelve el archivo PDF asociado a un número de guía."""
+    try:
+        # Ruta del archivo PDF
+        file_path = os.path.join("static/pdf", f"{id_guid}.pdf")
+        if not os.path.exists(file_path):
+            raise HTTPException(status_code=404, detail="Archivo PDF no encontrado.")
+
+        return FileResponse(file_path, media_type="application/pdf", filename=f"{id_guid}.pdf")
+    except Exception as e:
+        logger.error(f"Error al visualizar el archivo PDF: {e}")
+        raise HTTPException(status_code=500, detail=f"Error al visualizar el archivo PDF: {str(e)}")    
