@@ -9,7 +9,15 @@
     <h1>Bienvenido a Bodega Internacional</h1>
     <p>Utiliza las opciones a continuación:</p>
 
-    <!-- Enlace para exportar a Excel -->
-    <a href="/export-excel/" class="btn btn-primary">Exportar Guías a Excel</a>
+    <!-- Formulario para exportar Excel con filtros -->
+    <form method="GET" action="/export-excel/">
+        <label for="proveedor">Exportar por Proveedor:</label>
+        <input type="text" id="proveedor" name="proveedor" placeholder="Ingrese el proveedor">
+        <br><br>
+        <label for="especialidad">Exportar por Especialidad:</label>
+        <input type="text" id="especialidad" name="especialidad" placeholder="Ingrese la especialidad">
+        <br><br>
+        <button type="submit" class="btn btn-primary">Exportar Guías a Excel</button>
+    </form>
 </body>
 </html>
