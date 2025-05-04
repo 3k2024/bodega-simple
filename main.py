@@ -135,6 +135,9 @@ def formulario_importar_excel(request: Request):
     return templates.TemplateResponse("importar_excel.html", {"request": request})
 
 
+#---PROCESAR ARCHIVO EXCEL Y CARGAR A BD----------------
+
+
 @app.post("/procesar-excel")
 async def procesar_excel(file: UploadFile = File(...), db: Session = Depends(get_session)):
     """Procesa un archivo Excel y guarda los datos en la base de datos."""
@@ -145,10 +148,19 @@ async def procesar_excel(file: UploadFile = File(...), db: Session = Depends(get
         # Leer el archivo Excel
         df = pd.read_excel(file.file)
 
-        # Validar las columnas requeridas
+        # Cabeceras requeridas
         columnas_requeridas = {'GD', 'Fecha', 'Proveedor', 'TAG', 'Descripcion Material', 'Cantidad'}
-        if not columnas_requeridas.issubset(df.columns):
-            raise HTTPException(status_code=400, detail=f"Faltan columnas requeridas: {', '.join(columnas_requeridas)}")
+
+        # Verificar si las cabeceras requeridas están presentes
+        columnas_presentes = set(df.columns)
+        if not columnas_requeridas.issubset(columnas_presentes):
+            raise HTTPException(
+                status_code=400,
+                detail=f"Faltan columnas requeridas: {', '.join(columnas_requeridas - columnas_presentes)}"
+            )
+
+        # Reordenar las columnas según las cabeceras requeridas
+        df = df[list(columnas_requeridas)]
 
         # Procesar cada fila del archivo
         for _, row in df.iterrows():
