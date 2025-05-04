@@ -138,6 +138,8 @@ def formulario_importar_excel(request: Request):
 #---PROCESAR ARCHIVO EXCEL Y CARGAR A BD----------------
 
 
+from dateutil.parser import parse  # Importar el analizador de fechas
+
 @app.post("/procesar-excel")
 async def procesar_excel(file: UploadFile = File(...), db: Session = Depends(get_session)):
     """Procesa un archivo Excel y guarda los datos en la base de datos."""
@@ -192,9 +194,93 @@ async def procesar_excel(file: UploadFile = File(...), db: Session = Depends(get
 
         # Procesar cada fila del archivo
         for _, row in df.iterrows():
-            # Manejar el formato de fecha (DD/MM/YYYY -> YYYY-MM-DD)
+            # Manejar el formato de fecha automáticamente
             try:
-                fecha = datetime.strptime(row["Fecha"], "%d/%m/%Y").date()
+                fecha = parse(row["Fecha"]).date()
+            except ValueError:
+                raise HTTPException(status_code=400, detail=f"Formato de fecha inválido: {row['Fecha']}")
+
+            gid = str(row['GD']).strip()
+            guia = db.exec(select(Guia).where(Guia.id_guid == gid)).first()
+            if not guia:
+                guia = Guia(
+                    id_guid=gid,
+                    fecha=fecha,
+                    proveedor=row.get('Proveedor', None)
+                )
+                db.add(guia)
+
+            item = Item(
+                tag=row['TAG'],
+                descripcion=row['Descripcion Material'],
+                cantidad=int(row['Cantidad']),
+                id_guid=gid
+            )
+            db.add(item)
+
+        db.commit()
+        return {"message": "Archivo procesado y datos guardados correctamente."}
+    except Exception as e:
+        logger.error(f"Error al procesar el archivo Excel: {e}")
+        raise HTTPException(status_code=500, detail=f"Error al procesar el archivo: {str(e)}")from dateutil.parser import parse  # Importar el analizador de fechas
+
+@app.post("/procesar-excel")
+async def procesar_excel(file: UploadFile = File(...), db: Session = Depends(get_session)):
+    """Procesa un archivo Excel y guarda los datos en la base de datos."""
+    try:
+        if not file.filename.endswith(".xlsx"):
+            raise HTTPException(status_code=400, detail="El archivo debe ser un Excel (.xlsx)")
+
+        # Leer el archivo Excel
+        df = pd.read_excel(file.file)
+
+        # Cabeceras requeridas y sus equivalentes
+        columnas_requeridas = {
+            "GD": ["GD", "Guía", "Guia", "Guia Despacho"],
+            "Fecha": ["Fecha", "Date", "Fecha de Ingreso"],
+            "Proveedor": ["Proveedor", "Supplier", "Empresa"],
+            "TAG": ["TAG", "Etiqueta"],
+            "Descripcion Material": ["Descripcion Material", "Descripción Material", "Material"],
+            "Cantidad": ["Cantidad", "Quantity", "Q"]
+        }
+
+        # Mapear las columnas del archivo a las requeridas
+        columnas_mapeadas = {}
+        for columna_requerida, equivalentes in columnas_requeridas.items():
+            for equivalente in equivalentes:
+                if equivalente in df.columns:
+                    columnas_mapeadas[columna_requerida] = equivalente
+                    break
+
+        # Verificar si faltan columnas requeridas
+        columnas_faltantes = [col for col in columnas_requeridas if col not in columnas_mapeadas]
+        if columnas_faltantes:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Faltan columnas requeridas: {', '.join(columnas_faltantes)}"
+            )
+
+        # Renombrar las columnas del DataFrame según las requeridas
+        df = df.rename(columns=columnas_mapeadas)
+
+        # Manejar celdas vacías
+        df = df.fillna({
+            "GD": "SIN_GD",
+            "Fecha": "01/01/1900",  # Fecha por defecto para celdas vacías
+            "Proveedor": "SIN_PROVEEDOR",
+            "TAG": "SIN_TAG",
+            "Descripcion Material": "SIN_DESCRIPCION",
+            "Cantidad": 0  # Cantidad por defecto para celdas vacías
+        })
+
+        # Convertir la columna Fecha a cadenas
+        df["Fecha"] = df["Fecha"].astype(str)
+
+        # Procesar cada fila del archivo
+        for _, row in df.iterrows():
+            # Manejar el formato de fecha automáticamente
+            try:
+                fecha = parse(row["Fecha"]).date()
             except ValueError:
                 raise HTTPException(status_code=400, detail=f"Formato de fecha inválido: {row['Fecha']}")
 
