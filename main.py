@@ -380,9 +380,9 @@ async def ver_pdf(id_guid: str):
 
 #---------Revisar Guias----------------
 
-@app.get("/detalle-guia", response_class=JSONResponse)
-async def detalle_guia(id_guid: str, db: Session = Depends(get_session)):
-    """Devuelve el detalle de una guía por su número."""
+@app.get("/detalle-guia", response_class=HTMLResponse)
+async def detalle_guia(id_guid: str, request: Request, db: Session = Depends(get_session)):
+    """Devuelve el detalle de una guía por su número en formato HTML."""
     try:
         # Limpiar el número de guía (eliminar espacios adicionales)
         id_guid = id_guid.strip()
@@ -398,10 +398,6 @@ async def detalle_guia(id_guid: str, db: Session = Depends(get_session)):
 
         # Obtener los ítems asociados a la guía
         items = db.exec(select(Item).where(Item.id_guid == id_guid)).all()
-
-        # Verificar si hay ítems asociados
-        if not items:
-            logger.warning(f"No se encontraron ítems asociados para la guía {id_guid}.")
 
         # Construir la respuesta
         detalle = {
@@ -421,7 +417,7 @@ async def detalle_guia(id_guid: str, db: Session = Depends(get_session)):
         }
 
         logger.info(f"Detalle de la guía {id_guid} obtenido correctamente.")
-        return detalle
+        return templates.TemplateResponse("detalle_guia.html", {"request": request, "detalle": detalle})
     except HTTPException as http_exc:
         logger.error(f"HTTP error al obtener el detalle de la guía: {http_exc.detail}")
         raise http_exc
