@@ -1,15 +1,21 @@
 from typing import Optional
-from datetime import datetime, timedelta
+from datetime import datetime
 import os
+import logging
 from fastapi import FastAPI, Request, Depends, HTTPException, Form, File, UploadFile
-from fastapi.responses import RedirectResponse, HTMLResponse, FileResponse
+from fastapi.responses import HTMLResponse, FileResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from sqlmodel import Session, select
-from db_config import init_db
+from db_config import init_db, get_session
 from models import Guia, Item
+import pandas as pd
 
-# --- Inicialización de BD y App ---
+# Configuración de logging
+logging.basicConfig(level=logging.DEBUG)
+logger = logging.getLogger(__name__)
+
+# Inicialización de BD y App
 init_db()
 app = FastAPI(
     title="Bodega Internacional",
@@ -20,7 +26,6 @@ app = FastAPI(
 app.mount("/static", StaticFiles(directory="static"), name="static")
 templates = Jinja2Templates(directory="templates")
 
-# --- Rutas ---
 @app.get("/", response_class=HTMLResponse)
 def home(request: Request):
     return templates.TemplateResponse("home.html", {"request": request})
@@ -42,9 +47,11 @@ async def guardar_guia_manual(
     db: Session = Depends(get_session)
 ):
     try:
+        logger.debug(f"Datos recibidos: id_guid={id_guid}, fecha={fecha}, tag={tag}, descripcion={descripcion}, cantidad={cantidad}")
         fecha_obj = datetime.strptime(fecha, "%Y-%m-%d").date()
         guia = db.exec(select(Guia).where(Guia.id_guid == id_guid)).first()
         if not guia:
+            logger.debug(f"No se encontró la guía con id_guid={id_guid}. Creando una nueva.")
             guia = Guia(
                 id_guid=id_guid,
                 fecha=fecha_obj,
@@ -62,8 +69,10 @@ async def guardar_guia_manual(
         )
         db.add(item)
         db.commit()
+        logger.info(f"Guía e ítem guardados correctamente: id_guid={id_guid}, tag={tag}")
         return {"message": "Guía guardada correctamente."}
     except Exception as e:
+        logger.error(f"Error al guardar la guía: {e}")
         raise HTTPException(status_code=500, detail=f"Error al guardar la guía: {str(e)}")
 
 @app.get("/export-excel/")
@@ -84,18 +93,17 @@ def exportar_guias_a_excel(db: Session = Depends(get_session)):
                     "Especialidad": item.especialidad
                 })
 
-        import pandas as pd
-        df = pd.DataFrame(data)
         file_path = "guias_exportadas.xlsx"
+        df = pd.DataFrame(data)
         df.to_excel(file_path, index=False)
         return FileResponse(file_path, media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", filename="guias_exportadas.xlsx")
     except Exception as e:
+        logger.error(f"Error al exportar las guías: {e}")
         raise HTTPException(status_code=500, detail=f"Error al exportar las guías: {str(e)}")
 
 @app.post("/manual-import/")
 async def manual_import(file: UploadFile = File(...), db: Session = Depends(get_session)):
     try:
-        import pandas as pd
         if file.filename.endswith(".xlsx"):
             df = pd.read_excel(file.file)
         else:
@@ -126,8 +134,10 @@ async def manual_import(file: UploadFile = File(...), db: Session = Depends(get_
             db.add(item)
 
         db.commit()
+        logger.info(f"Importación completada: {len(df)} registros procesados.")
         return {"message": f"Importación completada: {len(df)} registros procesados."}
     except Exception as e:
+        logger.error(f"Error al procesar el archivo: {e}")
         raise HTTPException(status_code=500, detail=f"Error al procesar el archivo: {str(e)}")
 
 if __name__ == "__main__":
