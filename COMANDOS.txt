@@ -1,0 +1,15 @@
+COMANDOS:
+
+git add templates/home.html = COMANDO PARA AGREGAR
+
+git commit -m "Actualiza home.html con enlace para exportar guías a Excel"=COMANDO PARA CARGAR
+
+git add templates/home.html
+git commit -m "Actualiza home.html con enlace para exportar guías a Excel"
+git push------->> scripts completo 
+
+
+------ para eliminar git-------
+git rm templates/guia_form.html
+git commit -m "Elimina guia_form.html porque no está en uso"
+git push

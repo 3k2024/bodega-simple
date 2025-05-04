@@ -4,15 +4,23 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Bodega Internacional CONPAX INCOLUR</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
 </head>
-<body>
-    <h1>Bodega Internacional CONPAX INCOLUR</h1>
-    <p>Bienvenido, selecciona una opción del menú:</p>
+<body class="container mt-5">
+    <h1 class="text-center">Bodega Internacional CONPAX INCOLUR</h1>
+    <p class="text-center">Bienvenido, selecciona una opción del menú:</p>
 
     <!-- Menú principal -->
-    <ul>
-        <li><a href="/click_ingreso_guia">Ingresar Guías</a></li>
-        <li><a href="/export-excel/">Exportar Guías a Excel</a></li>
-    </ul>
+    <div class="d-flex justify-content-center">
+        <ul class="list-group w-50">
+            <li class="list-group-item">
+                <a href="/click_ingreso_guia" class="btn btn-primary w-100">Ingresar Guías</a>
+            </li>
+            <li class="list-group-item">
+                <a href="/export-excel/" class="btn btn-success w-100">Exportar Guías a Excel</a>
+            </li>
+        </ul>
+    </div>
 </body>
 </html>

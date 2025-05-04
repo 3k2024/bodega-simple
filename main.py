@@ -26,15 +26,21 @@ app = FastAPI(
 app.mount("/static", StaticFiles(directory="static"), name="static")
 templates = Jinja2Templates(directory="templates")
 
+#---------pagina web de inicio------
+
 @app.get("/", response_class=HTMLResponse)
 def home(request: Request):
     """Página de inicio."""
     return templates.TemplateResponse("home.html", {"request": request})
 
+#ingreso de guias manualmente----------------
+
 @app.get("/click_ingreso_guia", response_class=HTMLResponse)
 def mostrar_formulario_ingreso_guia(request: Request):
     """Muestra el formulario para ingresar guías manualmente."""
     return templates.TemplateResponse("ingreso_guia.html", {"request": request})
+
+#ingreso de guias manualmente click----------------
 
 @app.post("/click_ingreso_guia")
 async def guardar_guia_manual(
