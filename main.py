@@ -303,7 +303,7 @@ async def vaciar_base_datos(password: str, db: Session = Depends(get_session)):
     """Elimina todos los registros de las tablas Guia e Item si se proporciona la contraseña correcta."""
     try:
         # Contraseña requerida
-        PASSWORD = "mi_contraseña_segura"  # Cambia esta contraseña por una más segura
+        PASSWORD = "Radiohead5"  # Cambia esta contraseña por una más segura
 
         # Validar la contraseña
         if password != PASSWORD:
