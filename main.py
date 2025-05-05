@@ -34,21 +34,21 @@ app = FastAPI(
 app.mount("/static", StaticFiles(directory="static"), name="static")
 templates = Jinja2Templates(directory="templates")
 
-#---------pagina web de inicio------
+#-------------------INICIO DE PAGINA WEB----------------
 
 @app.get("/", response_class=HTMLResponse)
 def home(request: Request):
     """Página de inicio."""
     return templates.TemplateResponse("home.html", {"request": request})
 
-#ingreso de guias manualmente----------------
+#-------------------CLICK INGRESO DE GUIAS FORMULARIO----------------
 
 @app.get("/click_ingreso_guia", response_class=HTMLResponse)
 def mostrar_formulario_ingreso_guia(request: Request):
     """Muestra el formulario para ingresar guías manualmente."""
     return templates.TemplateResponse("ingreso_guia.html", {"request": request})
 
-#ingreso de guias manualmente click----------------
+#-------------------CLICK INGRESO DE GUIAS MANNUAL----------------
 
 @app.post("/click_ingreso_guia")
 async def guardar_guia_manual(
@@ -66,17 +66,22 @@ async def guardar_guia_manual(
     try:
         logger.debug(f"Datos recibidos: id_guid={id_guid}, fecha={fecha}, tag={tag}, descripcion={descripcion}, cantidad={cantidad}")
         fecha_obj = datetime.strptime(fecha, "%Y-%m-%d").date()
-        guia = db.exec(select(Guia).where(Guia.id_guid == id_guid)).first()
-        if not guia:
-            logger.debug(f"No se encontró la guía con id_guid={id_guid}. Creando una nueva.")
-            guia = Guia(
-                id_guid=id_guid,
-                fecha=fecha_obj,
-                proveedor=proveedor,
-                observacion=observacion
-            )
-            db.add(guia)
 
+        # Verificar si el número de guía ya existe
+        guia = db.exec(select(Guia).where(Guia.id_guid == id_guid)).first()
+        if guia:
+            raise HTTPException(status_code=400, detail=f"El número de guía {id_guid} ya existe. ¿Desea duplicarlo?")
+
+        # Crear una nueva guía si no existe
+        guia = Guia(
+            id_guid=id_guid,
+            fecha=fecha_obj,
+            proveedor=proveedor,
+            observacion=observacion
+        )
+        db.add(guia)
+
+        # Crear un nuevo ítem asociado a la guía
         item = Item(
             tag=tag,
             descripcion=descripcion,
@@ -88,14 +93,16 @@ async def guardar_guia_manual(
         db.commit()
         logger.info(f"Guía e ítem guardados correctamente: id_guid={id_guid}, tag={tag}")
         return {"message": "Guía guardada correctamente."}
+    except HTTPException as http_exc:
+        logger.error(f"Error al guardar la guía: {http_exc.detail}")
+        raise http_exc
     except Exception as e:
-        logger.error(f"Error al guardar la guía: {e}")
-        raise HTTPException(status_code=500, detail=f"Error al guardar la guía: {str(e)}")
+        logger.error(f"Error inesperado al guardar la guía: {e}")
+        raise HTTPException(status_code=500, detail=f"Error inesperado al guardar la guía: {str(e)}")
 
 
 
-#------------link exportar a excel----------------
-
+#-------------------LINK EXPORTAR A EXCEL----------------
 
 
 @app.get("/export-excel/")
@@ -137,14 +144,16 @@ async def exportar_excel(db: Session = Depends(get_session)):
 
 
 
-#----------------------exprotar a excel FIN----------------
+#-------------------LINK IMPORTAR A EXCEL----------------
+
+
 @app.get("/importar-excel", response_class=HTMLResponse)
 def formulario_importar_excel(request: Request):
     """Muestra el formulario para importar guías desde un archivo Excel."""
     return templates.TemplateResponse("importar_excel.html", {"request": request})
 
 
-#---PROCESAR ARCHIVO EXCEL Y CARGAR A BD----------------
+#-------------------PROCESAR EXCEL----------------
 
 
 from dateutil.parser import parse  # Importar el analizador de fechas
@@ -234,6 +243,9 @@ async def procesar_excel(file: UploadFile = File(...), db: Session = Depends(get
         raise HTTPException(status_code=500, detail=f"Error al procesar el archivo: {str(e)}")
     
 
+#-------------------PROCESAR EL  EXCEL----------------
+
+
 @app.post("/procesar-excel")
 async def procesar_excel(file: UploadFile = File(...), db: Session = Depends(get_session)):
     """Procesa un archivo Excel y guarda los datos en la base de datos."""
@@ -318,12 +330,21 @@ async def procesar_excel(file: UploadFile = File(...), db: Session = Depends(get
         logger.error(f"Error al procesar el archivo Excel: {e}")
         raise HTTPException(status_code=500, detail=f"Error al procesar el archivo: {str(e)}")
 
-        #-------vaciar base de datos----------------
+#-------------------VACIAR LA BASE DE DATOS ----------------
+
+
 @app.get("/vaciar-bd", response_class=JSONResponse)
-async def vaciar_base_datos(db: Session = Depends(get_session)):
-    """Elimina todos los registros de las tablas Guia e Item."""
+async def vaciar_base_datos(password: str, db: Session = Depends(get_session)):
+    """Elimina todos los registros de las tablas Guia e Item si se proporciona la contraseña correcta."""
     try:
-        # Eliminar todos los registros de las tablas usando consultas SQL sin procesar
+        # Contraseña requerida
+        PASSWORD = "mi_contraseña_segura"  # Cambia esta contraseña por una más segura
+
+        # Validar la contraseña
+        if password != PASSWORD:
+            raise HTTPException(status_code=403, detail="Acceso denegado. Contraseña incorrecta.")
+
+        # Eliminar todos los registros de las tablas
         db.exec(text("DELETE FROM item;"))
         db.exec(text("DELETE FROM guia;"))
         db.commit()
@@ -333,7 +354,7 @@ async def vaciar_base_datos(db: Session = Depends(get_session)):
         logger.error(f"Error al vaciar la base de datos: {e}")
         raise HTTPException(status_code=500, detail=f"Error al vaciar la base de datos: {str(e)}")
     
-    #------------adjuntar pdf----------------
+#-------------------ADJUNTAR PDF----------------
 
 @app.get("/adjuntar-pdf", response_class=HTMLResponse)
 def formulario_adjuntar_pdf(request: Request):
@@ -379,7 +400,7 @@ async def ver_pdf(id_guid: str):
         raise HTTPException(status_code=500, detail=f"Error al visualizar el archivo PDF: {str(e)}")    
     
 
-#---------Revisar Guias----------------
+#-------------------DETALLE DE GUIA CONSULTAR----------------
 
 @app.get("/detalle-guia", response_class=HTMLResponse)
 async def detalle_guia(id_guid: str, request: Request, db: Session = Depends(get_session)):
