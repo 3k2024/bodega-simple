@@ -100,33 +100,34 @@ async def guardar_guia_manual(
 
 @app.get("/export-excel/")
 async def exportar_excel(db: Session = Depends(get_session)):
-    """Exporta los datos de las tablas Guia e Item a un archivo Excel."""
+    """Exporta los datos de las tablas Guia e Item a un archivo Excel en una sola hoja."""
     try:
-        # Consultar los datos de la tabla Guia
+        # Consultar los datos de las tablas Guia e Item
         guias = db.exec(select(Guia)).all()
         items = db.exec(select(Item)).all()
 
-        # Convertir los datos a DataFrames de pandas
-        df_guias = pd.DataFrame([{
-            "Número de Guía": guia.id_guid,
-            "Fecha": guia.fecha,
-            "Proveedor": guia.proveedor,
-            "Observación": guia.observacion
-        } for guia in guias])
+        # Combinar los datos de Guia e Item en un solo DataFrame
+        data = []
+        for item in items:
+            guia = next((g for g in guias if g.id_guid == item.id_guid), None)
+            if guia:
+                data.append({
+                    "Número de Guía": guia.id_guid,
+                    "Descripción": item.descripcion,
+                    "Cantidad": item.cantidad,
+                    "TAG": item.tag,
+                    "Fecha": guia.fecha,
+                    "Proveedor": guia.proveedor,
+                    "Especialidad": item.especialidad if item.especialidad else "No especificada",
+                    "Observación": guia.observacion if guia.observacion else "Sin observación"
+                })
 
-        df_items = pd.DataFrame([{
-            "TAG": item.tag,
-            "Descripción": item.descripcion,
-            "Cantidad": item.cantidad,
-            "Especialidad": item.especialidad,
-            "Número de Guía": item.id_guid
-        } for item in items])
+        # Crear un DataFrame con los datos combinados
+        df = pd.DataFrame(data)
 
-        # Crear un archivo Excel con los datos
+        # Crear un archivo Excel con una sola hoja
         file_path = "exported_data.xlsx"
-        with pd.ExcelWriter(file_path) as writer:
-            df_guias.to_excel(writer, index=False, sheet_name="Guias")
-            df_items.to_excel(writer, index=False, sheet_name="Items")
+        df.to_excel(file_path, index=False, sheet_name="Datos")
 
         # Enviar el archivo como respuesta
         return FileResponse(file_path, media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", filename="exported_data.xlsx")
