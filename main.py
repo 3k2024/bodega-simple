@@ -48,7 +48,6 @@ def mostrar_formulario_ingreso_guia(request: Request):
     """Muestra el formulario para ingresar guías manualmente."""
     return templates.TemplateResponse("ingreso_guia.html", {"request": request})
 
-#-------------------CLICK INGRESO DE GUIAS MANNUAL----------------
 
 @app.post("/click_ingreso_guia")
 async def guardar_guia_manual(
@@ -70,7 +69,7 @@ async def guardar_guia_manual(
         # Verificar si el número de guía ya existe
         guia = db.exec(select(Guia).where(Guia.id_guid == id_guid)).first()
         if guia:
-            raise HTTPException(status_code=400, detail=f"El número de guía {id_guid} ya existe. ¿Desea duplicarlo?")
+            raise HTTPException(status_code=400, detail=f"El número de guía {id_guid} ya existe. No se permiten duplicados.")
 
         # Crear una nueva guía si no existe
         guia = Guia(
@@ -99,7 +98,6 @@ async def guardar_guia_manual(
     except Exception as e:
         logger.error(f"Error inesperado al guardar la guía: {e}")
         raise HTTPException(status_code=500, detail=f"Error inesperado al guardar la guía: {str(e)}")
-
 
 
 #-------------------LINK EXPORTAR A EXCEL----------------
@@ -168,80 +166,47 @@ async def procesar_excel(file: UploadFile = File(...), db: Session = Depends(get
         # Leer el archivo Excel
         df = pd.read_excel(file.file)
 
-        # Cabeceras requeridas y sus equivalentes
-        columnas_requeridas = {
-            "GD": ["GD", "Guía", "Guia", "Guia Despacho"],
-            "Fecha": ["Fecha", "Date", "Fecha de Ingreso"],
-            "Proveedor": ["Proveedor", "Supplier", "Empresa"],
-            "TAG": ["TAG", "Etiqueta"],
-            "Descripcion Material": ["Descripcion Material", "Descripción Material", "Material"],
-            "Cantidad": ["Cantidad", "Quantity", "Q"]
-        }
-
-        # Mapear las columnas del archivo a las requeridas
-        columnas_mapeadas = {}
-        for columna_requerida, equivalentes in columnas_requeridas.items():
-            for equivalente in equivalentes:
-                if equivalente in df.columns:
-                    columnas_mapeadas[columna_requerida] = equivalente
-                    break
-
-        # Verificar si faltan columnas requeridas
-        columnas_faltantes = [col for col in columnas_requeridas if col not in columnas_mapeadas]
-        if columnas_faltantes:
-            raise HTTPException(
-                status_code=400,
-                detail=f"Faltan columnas requeridas: {', '.join(columnas_faltantes)}"
-            )
-
-        # Renombrar las columnas del DataFrame según las requeridas
-        df = df.rename(columns=columnas_mapeadas)
-
-        # Manejar celdas vacías
-        df = df.fillna({
-            "GD": "SIN_GD",
-            "Fecha": "01/01/1900",  # Fecha por defecto para celdas vacías
-            "Proveedor": "SIN_PROVEEDOR",
-            "TAG": "SIN_TAG",
-            "Descripcion Material": "SIN_DESCRIPCION",
-            "Cantidad": 0  # Cantidad por defecto para celdas vacías
-        })
-
-        # Convertir la columna Fecha a cadenas
-        df["Fecha"] = df["Fecha"].astype(str)
+        # Cabeceras requeridas
+        columnas_requeridas = ["GD", "Fecha", "Proveedor", "TAG", "Descripcion Material", "Cantidad"]
+        for col in columnas_requeridas:
+            if col not in df.columns:
+                raise HTTPException(status_code=400, detail=f"Falta la columna requerida: {col}")
 
         # Procesar cada fila del archivo
         for _, row in df.iterrows():
-            # Manejar el formato de fecha automáticamente
-            try:
-                fecha = parse(row["Fecha"]).date()
-            except ValueError:
-                raise HTTPException(status_code=400, detail=f"Formato de fecha inválido: {row['Fecha']}")
+            id_guid = str(row["GD"]).strip()
+            fecha = datetime.strptime(str(row["Fecha"]).strip(), "%Y-%m-%d").date()
+            proveedor = row.get("Proveedor", "").strip()
+            tag = row.get("TAG", "").strip()
+            descripcion = row.get("Descripcion Material", "").strip()
+            cantidad = int(row.get("Cantidad", 0))
 
-            gid = str(row['GD']).strip()
-            guia = db.exec(select(Guia).where(Guia.id_guid == gid)).first()
+            # Verificar si el número de guía ya existe
+            guia = db.exec(select(Guia).where(Guia.id_guid == id_guid)).first()
             if not guia:
+                # Crear una nueva guía si no existe
                 guia = Guia(
-                    id_guid=gid,
+                    id_guid=id_guid,
                     fecha=fecha,
-                    proveedor=row.get('Proveedor', None)
+                    proveedor=proveedor
                 )
                 db.add(guia)
 
+            # Crear un nuevo ítem asociado a la guía
             item = Item(
-                tag=row['TAG'],
-                descripcion=row['Descripcion Material'],
-                cantidad=int(row['Cantidad']),
-                id_guid=gid
+                tag=tag,
+                descripcion=descripcion,
+                cantidad=cantidad,
+                id_guid=id_guid
             )
             db.add(item)
 
         db.commit()
+        logger.info("Archivo procesado y datos guardados correctamente.")
         return {"message": "Archivo procesado y datos guardados correctamente."}
     except Exception as e:
         logger.error(f"Error al procesar el archivo Excel: {e}")
-        raise HTTPException(status_code=500, detail=f"Error al procesar el archivo: {str(e)}")
-    
+        raise HTTPException(status_code=500, detail=f"Error al procesar el archivo: {str(e)}")    
 
 #-------------------PROCESAR EL  EXCEL----------------
 
