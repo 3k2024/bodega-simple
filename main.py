@@ -96,45 +96,45 @@ async def guardar_guia_manual(
 
 #------------link exportar a excel----------------
 
+
+
 @app.get("/export-excel/")
-def exportar_guias_a_excel(
-    proveedor: Optional[str] = None,
-    especialidad: Optional[str] = None,
-    db: Session = Depends(get_session)
-):
-    """Exporta las guías e ítems a un archivo Excel con filtros opcionales."""
+async def exportar_excel(db: Session = Depends(get_session)):
+    """Exporta los datos de las tablas Guia e Item a un archivo Excel."""
     try:
-        # Consulta base para obtener las guías
-        query = select(Guia)
-        if proveedor:
-            query = query.where(Guia.proveedor == proveedor)
-        guias = db.exec(query).all()
+        # Consultar los datos de la tabla Guia
+        guias = db.exec(select(Guia)).all()
+        items = db.exec(select(Item)).all()
 
-        # Filtrar ítems por especialidad si se proporciona
-        data = []
-        for guia in guias:
-            for item in guia.items:
-                if especialidad and item.especialidad != especialidad:
-                    continue
-                data.append({
-                    "Número de Guía": guia.id_guid,
-                    "Fecha": guia.fecha,
-                    "Proveedor": guia.proveedor,
-                    "Observación": guia.observacion,
-                    "TAG": item.tag,
-                    "Descripción": item.descripcion,
-                    "Cantidad": item.cantidad,
-                    "Especialidad": item.especialidad
-                })
+        # Convertir los datos a DataFrames de pandas
+        df_guias = pd.DataFrame([{
+            "Número de Guía": guia.id_guid,
+            "Fecha": guia.fecha,
+            "Proveedor": guia.proveedor,
+            "Observación": guia.observacion
+        } for guia in guias])
 
-        # Generar el archivo Excel
-        file_path = "guias_exportadas.xlsx"
-        df = pd.DataFrame(data)
-        df.to_excel(file_path, index=False)
-        return FileResponse(file_path, media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", filename="guias_exportadas.xlsx")
+        df_items = pd.DataFrame([{
+            "TAG": item.tag,
+            "Descripción": item.descripcion,
+            "Cantidad": item.cantidad,
+            "Especialidad": item.especialidad,
+            "Número de Guía": item.id_guid
+        } for item in items])
+
+        # Crear un archivo Excel con los datos
+        file_path = "exported_data.xlsx"
+        with pd.ExcelWriter(file_path) as writer:
+            df_guias.to_excel(writer, index=False, sheet_name="Guias")
+            df_items.to_excel(writer, index=False, sheet_name="Items")
+
+        # Enviar el archivo como respuesta
+        return FileResponse(file_path, media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", filename="exported_data.xlsx")
     except Exception as e:
-        logger.error(f"Error al exportar las guías: {e}")
-        raise HTTPException(status_code=500, detail=f"Error al exportar las guías: {str(e)}")
+        logger.error(f"Error al exportar datos a Excel: {e}")
+        raise HTTPException(status_code=500, detail="Error al exportar datos a Excel.")
+
+
 
 #----------------------exprotar a excel FIN----------------
 @app.get("/importar-excel", response_class=HTMLResponse)
